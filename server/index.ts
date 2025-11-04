@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { generalApiLimiter } from "./middleware/rateLimit";
+import { logger } from "./lib/logger";
+import { requestLogger, errorLogger } from "./middleware/requestLogger";
 
 const app = express();
 
@@ -24,6 +26,9 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false, limit: maxBodySize }));
+
+// Structured request logging
+app.use(requestLogger);
 
 // Apply general rate limiting to all API routes
 app.use('/api/', generalApiLimiter);
@@ -61,6 +66,9 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Error logging middleware
+  app.use(errorLogger);
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -89,5 +97,23 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    logger.info('Server started successfully', { 
+      port, 
+      environment: process.env.NODE_ENV || 'development',
+      logLevel: process.env.LOG_LEVEL || 'info',
+    });
+  });
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', async () => {
+    logger.info('SIGTERM received, shutting down gracefully');
+    await logger.flush();
+    process.exit(0);
+  });
+
+  process.on('SIGINT', async () => {
+    logger.info('SIGINT received, shutting down gracefully');
+    await logger.flush();
+    process.exit(0);
   });
 })();
