@@ -6,6 +6,7 @@ import ActionBar from "@/components/ActionBar";
 import ProgressModal from "@/components/ProgressModal";
 import { useToast } from "@/hooks/use-toast";
 import { renderMarkdown } from "@/lib/markdown";
+import { analytics } from "@/lib/analytics";
 
 export default function Home() {
   const [markdown, setMarkdown] = useState("");
@@ -38,6 +39,9 @@ export default function Home() {
   const handleFileSelect = (content: string, file: File) => {
     setMarkdown(content);
     setUploadedFile({ name: file.name, size: file.size });
+    
+    analytics.trackUpload(file.name);
+    
     toast({
       title: "File loaded",
       description: `${file.name} has been loaded successfully.`,
@@ -104,6 +108,8 @@ export default function Home() {
 
       if (action === "share") {
         const data = await response.json();
+        analytics.trackConversion(action);
+        
         if (isMountedRef.current) {
           try {
             await navigator.clipboard.writeText(data.url);
@@ -123,6 +129,8 @@ export default function Home() {
       } else {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
+        
+        analytics.trackConversion(action);
         
         if (action === "download") {
           const a = document.createElement("a");
@@ -162,18 +170,25 @@ export default function Home() {
         console.error("Conversion error:", error);
         
         let errorMessage = "An unexpected error occurred while converting to PDF.";
+        let errorType = "unknown";
         
         if (error instanceof Error) {
           if (error.message.includes("Failed to fetch")) {
             errorMessage = "Unable to reach the server. Please check your internet connection.";
+            errorType = "network";
           } else if (error.message.includes("NetworkError")) {
             errorMessage = "Network error occurred. Please try again.";
+            errorType = "network";
           } else if (error.message.includes("timeout")) {
             errorMessage = "The conversion is taking too long. Please try with a smaller document.";
+            errorType = "timeout";
           } else {
             errorMessage = error.message;
+            errorType = "conversion";
           }
         }
+        
+        analytics.trackError(errorType, errorMessage);
         
         if (isMountedRef.current) {
           toast({

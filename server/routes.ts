@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { convertMarkdownSchema, type PdfOptions } from "@shared/schema";
+import { convertMarkdownSchema, feedbackSchema, type PdfOptions } from "@shared/schema";
 import MarkdownIt from "markdown-it";
 import puppeteer, { type Browser } from "puppeteer";
 import puppeteerCore from "puppeteer-core";
@@ -459,6 +459,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('[PDF] Error serving PDF:', error);
       res.status(500).json({
         error: 'Failed to retrieve PDF',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  // Submit feedback
+  app.post("/api/feedback", async (req, res) => {
+    try {
+      const feedback = feedbackSchema.parse({
+        ...req.body,
+        userAgent: req.headers['user-agent'],
+        url: req.headers.referer || req.body.url,
+      });
+
+      const stored = storage.storeFeedback(feedback);
+      console.log('[Feedback] New feedback received:', {
+        id: stored.id,
+        type: feedback.type,
+        hasEmail: !!feedback.email,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Thank you for your feedback!',
+        id: stored.id,
+      });
+    } catch (error) {
+      console.error('[Feedback] Error storing feedback:', error);
+      res.status(400).json({
+        error: 'Invalid feedback data',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  // Get all feedback (admin endpoint - requires authentication)
+  // IMPORTANT: This endpoint is disabled by default for security
+  // Enable by setting ADMIN_API_KEY environment variable
+  // Usage: GET /api/feedback?key=YOUR_ADMIN_API_KEY
+  app.get("/api/feedback", async (req, res) => {
+    try {
+      const adminKey = process.env.ADMIN_API_KEY;
+      
+      // Require authentication
+      if (!adminKey || req.query.key !== adminKey) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Admin API key required',
+        });
+      }
+
+      const allFeedback = storage.getAllFeedback();
+      res.json({
+        feedback: allFeedback,
+        count: allFeedback.length,
+      });
+    } catch (error) {
+      console.error('[Feedback] Error retrieving feedback:', error);
+      res.status(500).json({
+        error: 'Failed to retrieve feedback',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }

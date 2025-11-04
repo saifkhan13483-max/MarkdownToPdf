@@ -20,6 +20,15 @@ export const uploadMarkdownResponseSchema = z.object({
   text: z.string(),
 });
 
+export const feedbackSchema = z.object({
+  type: z.enum(["bug", "feature", "conversion_issue", "other"]),
+  message: z.string().min(10, "Please provide at least 10 characters"),
+  email: z.string().email().optional(),
+  url: z.string().optional(),
+  userAgent: z.string().optional(),
+});
+
 export type PdfOptions = z.infer<typeof pdfOptionsSchema>;
 export type ConvertMarkdownRequest = z.infer<typeof convertMarkdownSchema>;
 export type UploadMarkdownResponse = z.infer<typeof uploadMarkdownResponseSchema>;
+export type Feedback = z.infer<typeof feedbackSchema>;

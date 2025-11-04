@@ -8,7 +8,32 @@ The application follows a Linear/Notion-inspired productivity design system, emp
 
 ## Recent Changes
 
-**November 4, 2025 (Latest - Deployment Configuration):**
+**November 4, 2025 (Latest - Analytics & Feedback System):**
+- Implemented Plausible Analytics for privacy-friendly usage tracking
+  - Analytics script configured via environment variables:
+    - Set VITE_PLAUSIBLE_ENABLED=true to enable analytics
+    - Optionally set VITE_PLAUSIBLE_DOMAIN (defaults to window.location.hostname)
+  - No cookies, GDPR-compliant, lightweight tracking
+- Created analytics utility library (client/src/lib/analytics.ts) with custom event tracking:
+  - trackConversion(): Logs PDF conversions (download, view, share actions)
+  - trackUpload(): Tracks file upload events with file type
+  - trackError(): Captures error types and messages for debugging
+  - trackFeatureUsage(): Monitors feature adoption
+- Integrated analytics tracking throughout conversion flow in Home.tsx
+- Implemented feedback collection system:
+  - Floating feedback widget button (bottom-right corner)
+  - Feedback form with type selection (bug, conversion issue, feature request, other)
+  - Optional email field for follow-up
+  - Automatic URL and user-agent capture for context
+- Created backend feedback endpoints:
+  - POST /api/feedback: Submit new feedback with validation
+  - GET /api/feedback: Retrieve all feedback (secured with ADMIN_API_KEY environment variable)
+- Added feedback storage to in-memory storage system (MemStorage)
+- Updated shared schema with feedback validation (feedbackSchema)
+- All analytics events fire on successful conversions and errors for comprehensive tracking
+- Feedback widget styled with shadcn components and positioned as fixed floating button
+
+**November 4, 2025 (Earlier - Deployment Configuration):**
 - Configured application for production deployment to Vercel and Replit
 - Added serverless Puppeteer support using @sparticuz/chromium + puppeteer-core
 - Implemented automatic environment detection (VERCEL, REPLIT_DEPLOYMENT, NODE_ENV)

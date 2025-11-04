@@ -1,6 +1,8 @@
 // In-memory storage interface
 // For this MVP, we don't need persistence as conversions are stateless
 
+import type { Feedback } from "@shared/schema";
+
 export interface StoredPdf {
   id: string;
   buffer: Buffer;
@@ -9,14 +11,22 @@ export interface StoredPdf {
   expiresAt: Date;
 }
 
+export interface StoredFeedback extends Feedback {
+  id: string;
+  createdAt: Date;
+}
+
 export interface IStorage {
   storePdf(buffer: Buffer, filename: string): StoredPdf;
   getPdf(id: string): StoredPdf | undefined;
   cleanupExpiredPdfs(): void;
+  storeFeedback(feedback: Feedback): StoredFeedback;
+  getAllFeedback(): StoredFeedback[];
 }
 
 export class MemStorage implements IStorage {
   private pdfs: Map<string, StoredPdf> = new Map();
+  private feedback: StoredFeedback[] = [];
   private cleanupInterval: NodeJS.Timeout;
 
   constructor() {
@@ -69,6 +79,20 @@ export class MemStorage implements IStorage {
 
   private generateId(): string {
     return `pdf_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  }
+
+  storeFeedback(feedback: Feedback): StoredFeedback {
+    const storedFeedback: StoredFeedback = {
+      ...feedback,
+      id: `feedback_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
+      createdAt: new Date(),
+    };
+    this.feedback.push(storedFeedback);
+    return storedFeedback;
+  }
+
+  getAllFeedback(): StoredFeedback[] {
+    return [...this.feedback];
   }
 }
 
