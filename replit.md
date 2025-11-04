@@ -9,6 +9,16 @@ The application follows a Linear/Notion-inspired productivity design system, emp
 ## Recent Changes
 
 **November 4, 2025 (Latest):**
+- Implemented three PDF generation flows: Download, Open in New Tab, and Get Shareable Link
+- Added in-memory PDF storage system with 1-hour expiration for shareable links
+- Created GET `/api/pdf/:id` endpoint to serve stored PDFs
+- Updated `/api/convert` endpoint to support action parameter (download, view, share)
+- Enhanced UI with three distinct action buttons in the ActionBar
+- Implemented clipboard fallback for shareable links when clipboard access is denied
+- Added proper cleanup interval management with unref() to prevent process hanging
+- Shareable links automatically expire after 1 hour with periodic cleanup
+
+**November 4, 2025 (Earlier):**
 - Added progress modal with spinner and cancel functionality for PDF generation
 - Implemented AbortController to allow users to cancel ongoing conversions
 - Enhanced error handling with clear, user-friendly messages for different scenarios
@@ -77,7 +87,11 @@ Preferred communication style: Simple, everyday language.
 - **Development Server**: Vite integration with HMR middleware
 
 **API Design:**
-- **Stateless conversion**: POST `/api/convert` endpoint accepts markdown and returns PDF blob
+- **Multi-action conversion**: POST `/api/convert` endpoint supports three actions:
+  - `download`: Returns PDF as attachment for direct download
+  - `view`: Returns PDF as inline content for viewing in new tab via blob URL
+  - `share`: Stores PDF in-memory and returns shareable URL (1-hour expiration)
+- **PDF retrieval**: GET `/api/pdf/:id` serves stored PDFs by ID
 - **Request validation**: Zod schema validation for type-safe API contracts
 - **Size limits**: 10MB request body limit to prevent abuse
 - **Browser caching**: Singleton Puppeteer browser instance for performance
@@ -100,8 +114,12 @@ Preferred communication style: Simple, everyday language.
 ### Data Storage Solutions
 
 **Current Implementation:**
-- **In-memory storage**: MemStorage class providing storage interface
-- **Stateless operations**: No persistence required for MVP
+- **In-memory PDF storage**: MemStorage class stores generated PDFs for shareable links
+  - 1-hour expiration policy for all stored PDFs
+  - Automatic cleanup every 5 minutes to remove expired entries
+  - Random ID generation for security (format: `pdf_{timestamp}_{random}`)
+  - Interval timer properly unref'd to prevent process hanging
+- **Stateless conversion**: Direct download and view actions remain stateless
 - **Session management**: Infrastructure in place (connect-pg-simple) but not actively used
 
 **Database Configuration:**
