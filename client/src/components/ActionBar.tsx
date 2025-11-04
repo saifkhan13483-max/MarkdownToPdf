@@ -14,6 +14,7 @@ interface ActionBarProps {
     orientation: string;
     margins: string;
     theme: string;
+    template: string;
   };
   onOptionsChange: (options: any) => void;
 }

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Header from "@/components/Header";
 import MarkdownEditor from "@/components/MarkdownEditor";
 import MarkdownPreview from "@/components/MarkdownPreview";
 import ActionBar from "@/components/ActionBar";
+import ProgressModal from "@/components/ProgressModal";
 import { useToast } from "@/hooks/use-toast";
 import { renderMarkdown } from "@/lib/markdown";
 
@@ -18,6 +19,21 @@ export default function Home() {
     template: "minimal",
   });
   const { toast } = useToast();
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isMountedRef = useRef(true);
+
+  // Cleanup on unmount: abort any in-flight requests and prevent state updates
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, []);
 
   const handleFileSelect = (content: string, file: File) => {
     setMarkdown(content);
@@ -29,8 +45,17 @@ export default function Home() {
   };
 
   const handleConvert = async () => {
-    if (!markdown) return;
+    if (!markdown) {
+      toast({
+        title: "No Content",
+        description: "Please enter some markdown content before converting.",
+        variant: "destructive",
+      });
+      return;
+    }
     
+    // Create a new AbortController for this conversion
+    abortControllerRef.current = new AbortController();
     setIsConverting(true);
     
     try {
@@ -57,11 +82,25 @@ export default function Home() {
             template: options.template,
           },
         }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Conversion failed");
+        const contentType = response.headers.get("content-type");
+        let errorMessage = "Failed to convert to PDF";
+        
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            const error = await response.json();
+            errorMessage = error.message || error.error || errorMessage;
+          } catch {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+        } else {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const blob = await response.blob();
@@ -74,18 +113,65 @@ export default function Home() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-      toast({
-        title: "PDF Generated",
-        description: "Your PDF has been downloaded successfully.",
-      });
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        toast({
+          title: "PDF Generated Successfully",
+          description: "Your PDF has been downloaded to your device.",
+        });
+      }
     } catch (error) {
-      console.error("Conversion error:", error);
-      toast({
-        title: "Conversion Failed",
-        description: error instanceof Error ? error.message : "Failed to convert to PDF",
-        variant: "destructive",
-      });
+      // Don't show error toast if the request was cancelled by the user
+      if (error instanceof Error && error.name === "AbortError") {
+        // Only show toast if component is still mounted
+        if (isMountedRef.current) {
+          toast({
+            title: "Conversion Cancelled",
+            description: "PDF generation was cancelled.",
+          });
+        }
+      } else {
+        console.error("Conversion error:", error);
+        
+        // Provide user-friendly error messages
+        let errorMessage = "An unexpected error occurred while converting to PDF.";
+        
+        if (error instanceof Error) {
+          if (error.message.includes("Failed to fetch")) {
+            errorMessage = "Unable to reach the server. Please check your internet connection.";
+          } else if (error.message.includes("NetworkError")) {
+            errorMessage = "Network error occurred. Please try again.";
+          } else if (error.message.includes("timeout")) {
+            errorMessage = "The conversion is taking too long. Please try with a smaller document.";
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
+        // Only show toast if component is still mounted
+        if (isMountedRef.current) {
+          toast({
+            title: "Conversion Failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
+      }
     } finally {
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsConverting(false);
+      }
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleCancelConversion = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (isMountedRef.current) {
       setIsConverting(false);
     }
   };
@@ -217,6 +303,11 @@ function greet(name) {
         hasContent={!!markdown}
         options={options}
         onOptionsChange={setOptions}
+      />
+
+      <ProgressModal
+        open={isConverting}
+        onCancel={handleCancelConversion}
       />
     </div>
   );
