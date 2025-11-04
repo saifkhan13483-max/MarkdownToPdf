@@ -8,7 +8,26 @@ The application follows a Linear/Notion-inspired productivity design system, emp
 
 ## Recent Changes
 
-**November 4, 2025 (Latest - Security Features):**
+**November 4, 2025 (Latest - Testing & Maintainability):**
+- Implemented comprehensive test suite with 32 passing tests:
+  - 16 unit tests for markdown → HTML conversion
+  - 16 integration tests for API endpoints (including PDF generation)
+- Created GitHub Actions CI/CD pipeline:
+  - Automated linting with ESLint
+  - Automated testing with Vitest
+  - Build verification
+  - Code coverage reporting
+- Added production-ready structured logging system:
+  - JSON-formatted logs with configurable levels
+  - Optional Sentry integration for error tracking
+  - Request logging middleware with correlation IDs
+  - Graceful shutdown with log flushing
+- Created comprehensive documentation:
+  - docs/TESTING.md - Testing guide and best practices
+  - docs/LOGGING.md - Logging configuration and usage
+- All tests verified passing in CI environment
+
+**November 4, 2025 (Security Features):**
 - Implemented comprehensive rate limiting to prevent API abuse:
   - 10 conversions per IP per minute on `/api/convert` endpoint
   - 100 requests per IP per minute on all `/api/*` endpoints
@@ -204,9 +223,14 @@ The application requires the following NixOS packages for Puppeteer/Chromium:
 - **Replit-specific plugins**: Runtime error overlay, cartographer, dev banner
 - **esbuild**: Server-side bundling for production
 - **tsx**: TypeScript execution for development server
+- **Vitest**: Fast unit and integration testing framework
+- **Supertest**: HTTP integration testing library
+- **GitHub Actions**: Automated CI/CD pipeline
 
 **Design Rationale**:
 - Puppeteer chosen over lighter PDF libraries to ensure high-fidelity rendering of complex markdown with styling
 - markdown-it selected for its extensibility and active maintenance
 - Radix UI provides accessibility out-of-box while maintaining full styling control
 - Serverless PostgreSQL (Neon) ready for future features without infrastructure management
+- Vitest chosen for testing to align with Vite build system
+- Structured logging with optional Sentry for production observability
