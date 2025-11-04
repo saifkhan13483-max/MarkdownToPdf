@@ -213,6 +213,21 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  /* Enhanced focus states for accessibility */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Ensure buttons and interactive elements have visible focus */
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
 }
 
 /**
@@ -516,4 +531,63 @@
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-size: 0.875em;
+}
+
+/* Improve prose readability and contrast */
+.prose {
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.prose p,
+.prose li {
+  color: hsl(var(--foreground));
+}
+
+.prose strong {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.prose a {
+  color: hsl(var(--primary));
+  text-decoration-color: hsl(var(--primary) / 0.4);
+}
+
+.prose a:hover {
+  text-decoration-color: hsl(var(--primary));
+}
+
+.prose blockquote {
+  border-left-color: hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+}
+
+.prose table {
+  font-size: 0.875rem;
+}
+
+.prose th {
+  color: hsl(var(--foreground));
+}
+
+.prose td {
+  color: hsl(var(--foreground));
+}
+
+/* Minimum font size for mobile readability */
+@media (max-width: 640px) {
+  .prose {
+    font-size: 0.9375rem;
+  }
 }

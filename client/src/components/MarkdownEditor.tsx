@@ -61,27 +61,29 @@ export default function MarkdownEditor({ value, onChange, onFileSelect, uploaded
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex flex-wrap items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b gap-2">
         <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground" data-testid="text-editor-title">
           Markdown Input
         </h2>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
           {uploadedFile && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <FileText className="w-3 h-3" />
-              <span>{uploadedFile.name}</span>
-              <span>({formatFileSize(uploadedFile.size)})</span>
+              <span className="truncate max-w-[120px] sm:max-w-none">{uploadedFile.name}</span>
+              <span className="hidden sm:inline">({formatFileSize(uploadedFile.size)})</span>
             </div>
           )}
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            <span data-testid="text-word-count">{wordCount} words</span>
-            <span data-testid="text-char-count">{charCount} characters</span>
+          <div id="editor-stats" className="flex gap-2 sm:gap-4 text-xs text-muted-foreground" aria-live="polite">
+            <span data-testid="text-word-count" aria-label={`${wordCount} words`}>{wordCount} words</span>
+            <span data-testid="text-char-count" aria-label={`${charCount} characters`} className="hidden sm:inline">{charCount} characters</span>
           </div>
           <Button
             size="sm"
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
             className="gap-2"
+            aria-label="Upload markdown file"
+            data-testid="button-upload-file"
           >
             <Upload className="w-3 h-3" />
             Upload .md
@@ -92,6 +94,7 @@ export default function MarkdownEditor({ value, onChange, onFileSelect, uploaded
             accept=".md"
             onChange={handleFileUpload}
             className="hidden"
+            aria-label="File input for markdown documents"
           />
         </div>
       </div>
@@ -117,6 +120,8 @@ export default function MarkdownEditor({ value, onChange, onFileSelect, uploaded
 Or drag and drop a .md file, or click 'Upload .md' above"
           className="h-full resize-none font-mono text-sm border-0 focus-visible:ring-0 p-0"
           data-testid="textarea-markdown"
+          aria-label="Markdown editor input"
+          aria-describedby="editor-stats"
         />
       </div>
     </div>

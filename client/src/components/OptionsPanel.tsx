@@ -6,6 +6,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Settings } from "lucide-react";
 
 interface OptionsPanelProps {
   options: {
@@ -23,14 +30,14 @@ export default function OptionsPanel({ options, onOptionsChange }: OptionsPanelP
     onOptionsChange({ ...options, [key]: value });
   };
 
-  return (
+  const renderOptionsContent = (idPrefix: string = "") => (
     <div className="flex flex-wrap items-center gap-4 md:gap-6">
       <div className="flex items-center gap-2">
-        <Label htmlFor="page-size" className="text-xs text-muted-foreground whitespace-nowrap">
+        <Label htmlFor={`${idPrefix}page-size`} className="text-xs text-muted-foreground whitespace-nowrap">
           Page Size:
         </Label>
         <Select value={options.pageSize} onValueChange={(value) => updateOption("pageSize", value)}>
-          <SelectTrigger id="page-size" className="h-8 w-24 text-xs">
+          <SelectTrigger id={`${idPrefix}page-size`} className="h-8 w-24 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -41,11 +48,11 @@ export default function OptionsPanel({ options, onOptionsChange }: OptionsPanelP
       </div>
 
       <div className="flex items-center gap-2">
-        <Label htmlFor="orientation" className="text-xs text-muted-foreground whitespace-nowrap">
+        <Label htmlFor={`${idPrefix}orientation`} className="text-xs text-muted-foreground whitespace-nowrap">
           Orientation:
         </Label>
         <Select value={options.orientation} onValueChange={(value) => updateOption("orientation", value)}>
-          <SelectTrigger id="orientation" className="h-8 w-28 text-xs">
+          <SelectTrigger id={`${idPrefix}orientation`} className="h-8 w-28 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -56,11 +63,11 @@ export default function OptionsPanel({ options, onOptionsChange }: OptionsPanelP
       </div>
 
       <div className="flex items-center gap-2">
-        <Label htmlFor="margins" className="text-xs text-muted-foreground whitespace-nowrap">
+        <Label htmlFor={`${idPrefix}margins`} className="text-xs text-muted-foreground whitespace-nowrap">
           Margins:
         </Label>
         <Select value={options.margins} onValueChange={(value) => updateOption("margins", value)}>
-          <SelectTrigger id="margins" className="h-8 w-28 text-xs">
+          <SelectTrigger id={`${idPrefix}margins`} className="h-8 w-28 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -72,11 +79,11 @@ export default function OptionsPanel({ options, onOptionsChange }: OptionsPanelP
       </div>
 
       <div className="flex items-center gap-2">
-        <Label htmlFor="theme" className="text-xs text-muted-foreground whitespace-nowrap">
+        <Label htmlFor={`${idPrefix}theme`} className="text-xs text-muted-foreground whitespace-nowrap">
           Theme:
         </Label>
         <Select value={options.theme} onValueChange={(value) => updateOption("theme", value)}>
-          <SelectTrigger id="theme" className="h-8 w-32 text-xs" data-testid="select-theme">
+          <SelectTrigger id={`${idPrefix}theme`} className="h-8 w-32 text-xs" data-testid="select-theme">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -88,11 +95,11 @@ export default function OptionsPanel({ options, onOptionsChange }: OptionsPanelP
       </div>
 
       <div className="flex items-center gap-2">
-        <Label htmlFor="template" className="text-xs text-muted-foreground whitespace-nowrap">
+        <Label htmlFor={`${idPrefix}template`} className="text-xs text-muted-foreground whitespace-nowrap">
           Template:
         </Label>
         <Select value={options.template} onValueChange={(value) => updateOption("template", value)}>
-          <SelectTrigger id="template" className="h-8 w-36 text-xs" data-testid="select-template">
+          <SelectTrigger id={`${idPrefix}template`} className="h-8 w-36 text-xs" data-testid="select-template">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -102,5 +109,33 @@ export default function OptionsPanel({ options, onOptionsChange }: OptionsPanelP
         </Select>
       </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Desktop: Show options directly */}
+      <div className="hidden md:block" role="region" aria-label="PDF export options">
+        {renderOptionsContent("desktop-")}
+      </div>
+      
+      {/* Mobile: Show options in accordion */}
+      <div className="md:hidden w-full">
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="options" className="border-0">
+            <AccordionTrigger className="py-2 hover:no-underline" data-testid="button-toggle-options">
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                <span className="text-sm font-medium">PDF Export Options</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div role="region" aria-label="PDF export options">
+                {renderOptionsContent("mobile-")}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+    </>
   );
 }

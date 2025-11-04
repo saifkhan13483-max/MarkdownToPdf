@@ -35,27 +35,29 @@ export default function ActionBar({
 }: ActionBarProps) {
   return (
     <div className="border-t bg-card">
-      <div className="max-w-7xl mx-auto px-6 py-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
         <OptionsPanel options={options} onOptionsChange={onOptionsChange} />
       </div>
       <div className="border-t">
-        <div className="max-w-7xl mx-auto flex items-center gap-4 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-2 sm:gap-4 px-4 sm:px-6 py-4">
           <Button
             onClick={onDownloadPdf}
             disabled={!hasContent || isConverting}
-            size="lg"
-            className="gap-2"
+            size="default"
+            className="gap-2 flex-1 sm:flex-initial"
             data-testid="button-download-pdf"
           >
             {isConverting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" data-testid="icon-loading" />
-                Converting...
+                <span className="hidden sm:inline">Converting...</span>
+                <span className="sm:hidden">Converting</span>
               </>
             ) : (
               <>
                 <Download className="w-4 h-4" data-testid="icon-download" />
-                Download PDF
+                <span className="hidden sm:inline">Download PDF</span>
+                <span className="sm:hidden">PDF</span>
               </>
             )}
           </Button>
@@ -63,51 +65,64 @@ export default function ActionBar({
             onClick={onOpenPdf}
             disabled={!hasContent || isConverting}
             variant="outline"
-            size="lg"
+            size="default"
             className="gap-2"
             data-testid="button-open-pdf"
+            aria-label="Open PDF in new tab"
           >
             <ExternalLink className="w-4 h-4" data-testid="icon-open" />
-            Open in New Tab
+            <span className="hidden lg:inline">Open in New Tab</span>
+            <span className="lg:hidden">Open</span>
           </Button>
           <Button
             onClick={onSharePdf}
             disabled={!hasContent || isConverting}
             variant="outline"
-            size="lg"
+            size="default"
             className="gap-2"
             data-testid="button-share-pdf"
+            aria-label="Get shareable link to PDF"
           >
             <Share2 className="w-4 h-4" data-testid="icon-share" />
-            Get Shareable Link
+            <span className="hidden lg:inline">Get Shareable Link</span>
+            <span className="lg:hidden">Share</span>
           </Button>
           <Button
             variant="outline"
             onClick={onDownloadHTML}
             disabled={!hasContent}
+            size="default"
             className="gap-2"
+            aria-label="Download as HTML file"
+            data-testid="button-download-html"
           >
             <FileCode className="w-4 h-4" />
-            Download HTML
+            <span className="hidden md:inline">Download HTML</span>
+            <span className="md:hidden">HTML</span>
           </Button>
           <Button
             variant="outline"
             onClick={onClear}
             disabled={!hasContent}
+            size="default"
             className="gap-2"
             data-testid="button-clear"
+            aria-label="Clear all content"
           >
             <Trash2 className="w-4 h-4" />
-            Clear
+            <span className="hidden sm:inline">Clear</span>
           </Button>
           <Button
             variant="ghost"
             onClick={onDownloadSample}
-            className="gap-2 ml-auto"
+            size="default"
+            className="gap-2 sm:ml-auto"
             data-testid="button-sample"
+            aria-label="Load sample markdown content"
           >
             <FileDown className="w-4 h-4" />
-            Load Sample
+            <span className="hidden md:inline">Load Sample</span>
+            <span className="md:hidden">Sample</span>
           </Button>
         </div>
       </div>

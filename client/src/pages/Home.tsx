@@ -292,22 +292,31 @@ function greet(name) {
 
   return (
     <div className="flex flex-col h-screen">
+      {/* Skip to main content link for keyboard navigation */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md"
+        data-testid="link-skip-to-content"
+      >
+        Skip to main content
+      </a>
+      
       <Header />
       
       <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="max-w-7xl w-full mx-auto px-6 py-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-2">Convert Markdown to PDF</h2>
-            <p className="text-muted-foreground">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-8">
+          <div className="text-center mb-4 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Convert Markdown to PDF</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Transform your Markdown documents into beautiful, professional PDFs instantly
             </p>
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full max-w-7xl mx-auto px-6 pb-6">
-            <div className="grid lg:grid-cols-2 gap-6 h-full">
-              <div className="border rounded-lg flex flex-col overflow-hidden">
+        <main id="main-content" className="flex-1 overflow-hidden">
+          <div className="h-full max-w-7xl mx-auto px-4 sm:px-6 pb-6">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-6 h-full">
+              <div className="border rounded-lg flex flex-col overflow-hidden min-h-[300px] md:min-h-0">
                 <MarkdownEditor 
                   value={markdown} 
                   onChange={setMarkdown}
@@ -315,12 +324,12 @@ function greet(name) {
                   uploadedFile={uploadedFile}
                 />
               </div>
-              <div className="border rounded-lg flex flex-col overflow-hidden">
+              <div className="border rounded-lg flex flex-col overflow-hidden min-h-[300px] md:min-h-0">
                 <MarkdownPreview markdown={markdown} />
               </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
 
       <ActionBar

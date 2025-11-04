@@ -45,6 +45,8 @@ export default function MarkdownPreview({ markdown }: MarkdownPreviewProps) {
               variant="outline"
               onClick={() => setShowRawHTML(!showRawHTML)}
               className="gap-2"
+              aria-label={showRawHTML ? "Show rendered preview" : "Show raw HTML code"}
+              data-testid="button-toggle-view"
             >
               {showRawHTML ? (
                 <>
@@ -83,6 +85,8 @@ export default function MarkdownPreview({ markdown }: MarkdownPreviewProps) {
                 className="prose prose-sm dark:prose-invert max-w-none"
                 dangerouslySetInnerHTML={{ __html: rendered.sanitizedHtml }}
                 data-testid="content-preview"
+                role="article"
+                aria-label="Rendered markdown preview"
               />
             )
           ) : (

@@ -19,12 +19,12 @@ export default function Header() {
   };
 
   return (
-    <header className="h-16 border-b flex items-center px-6 gap-4">
+    <header className="h-14 sm:h-16 border-b flex items-center px-4 sm:px-6 gap-2 sm:gap-4" role="banner">
       <div className="flex items-center gap-2">
-        <FileText className="w-6 h-6 text-primary" data-testid="icon-logo" />
-        <h1 className="text-xl font-semibold" data-testid="text-app-title">
+        <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-primary" aria-hidden="true" data-testid="icon-logo" />
+        <span className="text-lg sm:text-xl font-semibold" data-testid="text-app-title">
           Markdown to PDF
-        </h1>
+        </span>
       </div>
       <div className="ml-auto">
         <Button
@@ -32,12 +32,12 @@ export default function Header() {
           variant="ghost"
           onClick={toggleTheme}
           data-testid="button-theme-toggle"
-          aria-label="Toggle theme"
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
         >
           {isDark ? (
-            <Sun className="w-5 h-5" data-testid="icon-sun" />
+            <Sun className="w-5 h-5" aria-hidden="true" data-testid="icon-sun" />
           ) : (
-            <Moon className="w-5 h-5" data-testid="icon-moon" />
+            <Moon className="w-5 h-5" aria-hidden="true" data-testid="icon-moon" />
           )}
         </Button>
       </div>
