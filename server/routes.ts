@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { convertMarkdownSchema, type PdfOptions } from "@shared/schema";
 import MarkdownIt from "markdown-it";
 import puppeteer, { type Browser } from "puppeteer";
+import puppeteerCore from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -38,17 +40,53 @@ const upload = multer({
 // Cache browser instance for better performance
 let browserInstance: Browser | null = null;
 
+// Detect production environment (Vercel, Replit Deployment, or NODE_ENV)
+function isProductionEnvironment(): boolean {
+  return !!(
+    process.env.VERCEL || 
+    process.env.REPLIT_DEPLOYMENT === '1' || 
+    process.env.NODE_ENV === 'production'
+  );
+}
+
 async function getBrowser(): Promise<Browser> {
   if (!browserInstance || !browserInstance.isConnected()) {
-    browserInstance = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-      ],
-    });
+    const isProduction = isProductionEnvironment();
+    
+    if (isProduction) {
+      // Serverless environment (Vercel or Replit Deployment)
+      console.log('[PDF] Using serverless Chromium (@sparticuz/chromium)');
+      
+      // Disable graphics mode for faster performance
+      chromium.setGraphicsMode = false;
+      
+      browserInstance = await puppeteerCore.launch({
+        args: [
+          ...chromium.args,
+          '--font-render-hinting=none',
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+        ],
+        defaultViewport: {
+          width: 1280,
+          height: 720,
+        },
+        executablePath: await chromium.executablePath(),
+        headless: true,
+      });
+    } else {
+      // Local development environment
+      console.log('[PDF] Using local Puppeteer');
+      browserInstance = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+        ],
+      });
+    }
   }
   return browserInstance;
 }
