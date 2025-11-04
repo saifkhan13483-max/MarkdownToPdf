@@ -6,6 +6,8 @@ This web-based application allows users to convert Markdown content into profess
 
 **Maintainability Status:** Fully implemented with comprehensive testing, CI/CD pipeline, and monitoring (November 2025)
 
+**Vercel Optimization:** Optimized for serverless deployment on Vercel with Puppeteer-core + @sparticuz/chromium for PDF generation. Includes serverless API routes in `/api` folder and Vercel KV integration for PDF sharing. See VERCEL_DEPLOYMENT.md for deployment instructions.
+
 ## Configuration & Environment Variables
 
 ### Analytics Configuration

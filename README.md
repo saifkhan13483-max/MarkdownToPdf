@@ -103,6 +103,8 @@ Or deploy via GitHub integration:
 
 In your Vercel project settings, add environment variables if needed:
 
+**For detailed Vercel deployment instructions, see [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)**
+
 - \`MAX_FILE_SIZE\`: Maximum upload size (default: 2097152 bytes / 2MB)
 - \`MAX_CONTENT_SIZE\`: Maximum markdown content size (default: 2097152 bytes / 2MB)
 - \`RATE_LIMIT_MAX\`: Maximum requests per window (default: 10)

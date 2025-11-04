@@ -1,8 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-// This would need to be replaced with a real database or Redis in production
-// For serverless, consider using Vercel KV or another persistent storage
-const pdfStorage = new Map<string, { pdf: Buffer; filename: string }>();
+import { pdfStorage } from '../lib/storage';
 
 export default async function handler(
   req: VercelRequest,
@@ -19,15 +16,32 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid PDF ID' });
     }
 
-    const stored = pdfStorage.get(id);
-
-    if (!stored) {
-      return res.status(404).json({ error: 'PDF not found' });
+    // Check if storage is configured
+    if (!pdfStorage.isAvailable()) {
+      return res.status(503).json({
+        error: 'PDF sharing is not configured',
+        message: 'To enable PDF sharing, set up Vercel KV storage. See VERCEL_STORAGE_SETUP.md for instructions.',
+      });
     }
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${stored.filename}"`);
-    return res.status(200).send(stored.pdf);
+    try {
+      const stored = await pdfStorage.get(id);
+
+      if (!stored) {
+        return res.status(404).json({ error: 'PDF not found or expired' });
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${stored.filename}"`);
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      return res.status(200).send(stored.pdf);
+    } catch (storageError) {
+      console.error('[PDF] Storage error:', storageError);
+      return res.status(503).json({
+        error: 'Failed to retrieve PDF',
+        message: storageError instanceof Error ? storageError.message : 'Storage unavailable',
+      });
+    }
   } catch (error) {
     console.error('PDF retrieval error:', error);
     return res.status(500).json({ 

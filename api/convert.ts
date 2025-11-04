@@ -3,15 +3,13 @@ import MarkdownIt from 'markdown-it';
 import puppeteerCore from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 import { sanitizeHtml, validateContentSize, sanitizeFilename } from '../server/middleware/sanitize';
+import { pdfStorage } from './lib/storage';
 
 const md = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true,
 });
-
-// Simple in-memory storage for shared PDFs (for demo)
-const pdfStorage = new Map<string, { pdf: Buffer; filename: string }>();
 
 function getThemeStyles(theme: string): string {
   const baseStyles = `
@@ -184,16 +182,33 @@ export default async function handler(
 
       // Handle different actions
       if (action === 'share') {
-        // Generate a unique ID for sharing
-        const id = Math.random().toString(36).substring(2, 15);
-        pdfStorage.set(id, { pdf: Buffer.from(pdf), filename: `${safeFilename}.pdf` });
+        // Check if storage is configured
+        if (!pdfStorage.isAvailable()) {
+          return res.status(503).json({
+            error: 'PDF sharing is not configured',
+            message: 'To enable PDF sharing, set up Vercel KV storage. See VERCEL_STORAGE_SETUP.md for instructions.',
+            documentation: 'https://vercel.com/docs/storage/vercel-kv'
+          });
+        }
         
-        const shareUrl = `/api/pdf/${id}`;
-        return res.status(200).json({
-          success: true,
-          url: shareUrl,
-          id,
-        });
+        try {
+          // Generate a unique ID for sharing
+          const id = Math.random().toString(36).substring(2, 15);
+          await pdfStorage.set(id, Buffer.from(pdf), `${safeFilename}.pdf`);
+          
+          const shareUrl = `/api/pdf/${id}`;
+          return res.status(200).json({
+            success: true,
+            url: shareUrl,
+            id,
+          });
+        } catch (storageError) {
+          console.error('[PDF] Storage error:', storageError);
+          return res.status(503).json({
+            error: 'Failed to store PDF for sharing',
+            message: storageError instanceof Error ? storageError.message : 'Storage unavailable',
+          });
+        }
       } else if (action === 'view') {
         // Return PDF for viewing in browser
         res.setHeader('Content-Type', 'application/pdf');

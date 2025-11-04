@@ -18,6 +18,14 @@ The application has been optimized for Vercel deployment with:
 2. [Vercel CLI](https://vercel.com/cli) installed (optional, for local testing)
 3. Your project pushed to a Git repository (GitHub, GitLab, or Bitbucket)
 
+## ⚠️ Critical: Storage Setup Required
+
+**Before deploying, you MUST set up persistent storage for the PDF sharing feature.**
+
+The current implementation uses in-memory storage which **will NOT work** in production serverless environments. See [VERCEL_STORAGE_SETUP.md](./VERCEL_STORAGE_SETUP.md) for detailed instructions on setting up Vercel KV or Vercel Blob.
+
+**Recommended:** Use Vercel KV (Redis) for fast, reliable PDF storage with automatic expiration.
+
 ## Deployment Steps
 
 ### Method 1: Deploy via Vercel Dashboard (Recommended)
