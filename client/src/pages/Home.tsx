@@ -4,6 +4,7 @@ import MarkdownEditor from "@/components/MarkdownEditor";
 import MarkdownPreview from "@/components/MarkdownPreview";
 import ActionBar from "@/components/ActionBar";
 import { useToast } from "@/hooks/use-toast";
+import { renderMarkdown } from "@/lib/markdown";
 
 export default function Home() {
   const [markdown, setMarkdown] = useState("");
@@ -78,7 +79,6 @@ export default function Home() {
   const handleDownloadHTML = () => {
     if (!markdown) return;
     
-    const { renderMarkdown } = require("@/lib/markdown");
     const { sanitizedHtml } = renderMarkdown(markdown);
     
     const blob = new Blob([sanitizedHtml], { type: "text/html" });
