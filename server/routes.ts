@@ -4,11 +4,29 @@ import { storage } from "./storage";
 import { convertMarkdownSchema } from "@shared/schema";
 import MarkdownIt from "markdown-it";
 import puppeteer, { type Browser } from "puppeteer";
+import multer from "multer";
+import path from "path";
 
 const md = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true,
+});
+
+// Configure multer for file uploads (memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === '.md' || ext === '.markdown') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .md or .markdown files are allowed'));
+    }
+  },
 });
 
 // Cache browser instance for better performance
@@ -30,6 +48,29 @@ async function getBrowser(): Promise<Browser> {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // File upload endpoint
+  app.post("/api/upload-md", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const filename = req.file.originalname;
+      const text = req.file.buffer.toString('utf-8');
+
+      res.json({
+        filename,
+        text,
+      });
+    } catch (error) {
+      console.error('File upload error:', error);
+      res.status(500).json({ 
+        error: 'Failed to upload file',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // PDF conversion endpoint with size limit (10MB)
   app.post("/api/convert", async (req, res) => {
     try {

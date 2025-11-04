@@ -5,4 +5,10 @@ export const convertMarkdownSchema = z.object({
   filename: z.string().optional().default("document"),
 });
 
+export const uploadMarkdownResponseSchema = z.object({
+  filename: z.string(),
+  text: z.string(),
+});
+
 export type ConvertMarkdownRequest = z.infer<typeof convertMarkdownSchema>;
+export type UploadMarkdownResponse = z.infer<typeof uploadMarkdownResponseSchema>;

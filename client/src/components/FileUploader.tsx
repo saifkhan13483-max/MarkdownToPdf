@@ -2,6 +2,8 @@ import { Upload, File, X } from "lucide-react";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import type { UploadMarkdownResponse } from "@shared/schema";
 
 interface FileUploaderProps {
   onFileSelect: (content: string, filename: string) => void;
@@ -10,7 +12,9 @@ interface FileUploaderProps {
 export default function FileUploader({ onFileSelect }: FileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -26,7 +30,7 @@ export default function FileUploader({ onFileSelect }: FileUploaderProps) {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith(".md")) {
+    if (file && (file.name.endsWith(".md") || file.name.endsWith(".markdown"))) {
       processFile(file);
     }
   };
@@ -38,15 +42,42 @@ export default function FileUploader({ onFileSelect }: FileUploaderProps) {
     }
   };
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     setSelectedFile({ name: file.name, size: file.size });
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      onFileSelect(content, file.name);
-      console.log("File loaded:", file.name);
-    };
-    reader.readAsText(file);
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-md', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to upload file');
+      }
+
+      const data: UploadMarkdownResponse = await response.json();
+      onFileSelect(data.text, data.filename);
+      
+      toast({
+        title: "File uploaded",
+        description: `${data.filename} has been loaded successfully.`,
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload file",
+      });
+      setSelectedFile(null);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleRemove = () => {
@@ -75,16 +106,17 @@ export default function FileUploader({ onFileSelect }: FileUploaderProps) {
             border-2 border-dashed rounded-lg p-12 text-center cursor-pointer
             hover-elevate active-elevate-2 transition-colors
             ${isDragging ? "border-primary bg-primary/5" : "border-border"}
+            ${isUploading ? "opacity-50 pointer-events-none" : ""}
           `}
           onClick={() => fileInputRef.current?.click()}
           data-testid="dropzone-file-upload"
         >
           <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" data-testid="icon-upload" />
           <p className="text-base font-medium mb-2" data-testid="text-upload-title">
-            Drop your Markdown file here
+            {isUploading ? "Uploading..." : "Drop your Markdown file here"}
           </p>
           <p className="text-sm text-muted-foreground" data-testid="text-upload-subtitle">
-            or click to browse (.md files only)
+            {isUploading ? "Please wait" : "or click to browse (.md files only)"}
           </p>
           <input
             ref={fileInputRef}
@@ -93,6 +125,7 @@ export default function FileUploader({ onFileSelect }: FileUploaderProps) {
             onChange={handleFileInput}
             className="hidden"
             data-testid="input-file"
+            disabled={isUploading}
           />
         </div>
       ) : (
