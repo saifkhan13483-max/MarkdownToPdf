@@ -3,6 +3,12 @@ import request from 'supertest';
 import express, { type Express } from 'express';
 import { registerRoutes } from '../../server/routes';
 
+// Skip PDF generation tests if explicitly requested via SKIP_PDF_TESTS
+// Useful for environments where Puppeteer cannot run (e.g., Replit, some CI)
+// GitHub Actions CI has Chrome installed and does NOT set this flag
+const skipPdfTests = process.env.SKIP_PDF_TESTS === 'true';
+const testOrSkip = skipPdfTests ? it.skip : it;
+
 describe('API Integration Tests', () => {
   let app: Express;
 
@@ -14,7 +20,7 @@ describe('API Integration Tests', () => {
   });
 
   describe('POST /api/convert', () => {
-    it('should convert markdown to PDF and return PDF headers for download action', async () => {
+    testOrSkip('should convert markdown to PDF and return PDF headers for download action', async () => {
       const response = await request(app)
         .post('/api/convert')
         .send({
@@ -38,7 +44,7 @@ describe('API Integration Tests', () => {
       expect(response.body.length).toBeGreaterThan(0);
     });
 
-    it('should return shareable link for share action', async () => {
+    testOrSkip('should return shareable link for share action', async () => {
       const response = await request(app)
         .post('/api/convert')
         .send({
@@ -61,7 +67,7 @@ describe('API Integration Tests', () => {
       expect(response.body.url).toContain('/api/pdf/');
     });
 
-    it('should return PDF for view action', async () => {
+    testOrSkip('should return PDF for view action', async () => {
       const response = await request(app)
         .post('/api/convert')
         .send({
@@ -106,7 +112,7 @@ describe('API Integration Tests', () => {
       expect(response.body).toHaveProperty('error');
     });
 
-    it('should handle different page sizes', async () => {
+    testOrSkip('should handle different page sizes', async () => {
       const response = await request(app)
         .post('/api/convert')
         .send({
@@ -125,7 +131,7 @@ describe('API Integration Tests', () => {
       expect(response.headers['content-type']).toContain('application/pdf');
     });
 
-    it('should handle landscape orientation', async () => {
+    testOrSkip('should handle landscape orientation', async () => {
       const response = await request(app)
         .post('/api/convert')
         .send({
@@ -144,7 +150,7 @@ describe('API Integration Tests', () => {
       expect(response.headers['content-type']).toContain('application/pdf');
     });
 
-    it('should handle different themes', async () => {
+    testOrSkip('should handle different themes', async () => {
       const response = await request(app)
         .post('/api/convert')
         .send({
@@ -163,7 +169,7 @@ describe('API Integration Tests', () => {
       expect(response.headers['content-type']).toContain('application/pdf');
     });
 
-    it('should handle professional template', async () => {
+    testOrSkip('should handle professional template', async () => {
       const response = await request(app)
         .post('/api/convert')
         .send({
@@ -201,7 +207,7 @@ describe('API Integration Tests', () => {
       }
     });
 
-    it('should convert markdown with code blocks', async () => {
+    testOrSkip('should convert markdown with code blocks', async () => {
       const markdown = `# Code Example
 
 \`\`\`javascript
@@ -222,7 +228,7 @@ function hello() {
       expect(response.headers['content-type']).toContain('application/pdf');
     });
 
-    it('should convert markdown with lists and tables', async () => {
+    testOrSkip('should convert markdown with lists and tables', async () => {
       const markdown = `# Data
 
 ## List
@@ -250,7 +256,7 @@ function hello() {
   });
 
   describe('GET /api/pdf/:id', () => {
-    it('should retrieve a shared PDF by ID', async () => {
+    testOrSkip('should retrieve a shared PDF by ID', async () => {
       // First create a shared PDF
       const createResponse = await request(app)
         .post('/api/convert')

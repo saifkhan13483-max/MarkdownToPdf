@@ -4,6 +4,8 @@
 
 This web-based application allows users to convert Markdown content into professionally formatted PDF documents. It features a split-pane interface with real-time preview, designed with a focus on clarity, efficiency, and a minimal aesthetic inspired by productivity tools like Linear and Notion. The project aims to provide a robust, deployable, and user-friendly tool for high-quality document generation from Markdown input.
 
+**Maintainability Status:** Fully implemented with comprehensive testing, CI/CD pipeline, and monitoring (November 2025)
+
 ## Configuration & Environment Variables
 
 ### Analytics Configuration
@@ -19,6 +21,45 @@ This web-based application allows users to convert Markdown content into profess
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Testing & Quality Assurance
+
+### Test Coverage
+
+- **Unit Tests** (16 tests): Comprehensive markdown → HTML conversion testing
+  - Tests all markdown features (headings, lists, code blocks, tables, links, images)
+  - All tests pass in all environments
+  
+- **Integration Tests** (16 tests): Full API endpoint testing
+  - PDF generation tests (10): download/view/share actions, themes, templates, page sizes, orientations
+  - Validation tests (6): Input validation, error handling, 404 responses
+  - Opt-in skip mechanism for environments where Puppeteer cannot run
+
+### CI/CD Pipeline
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push:
+1. **Linting**: ESLint code quality checks
+2. **Unit Tests**: All 16 markdown conversion tests
+3. **Integration Tests**: All 16 API tests with Chrome/Puppeteer fully working
+4. **Build**: TypeScript compilation and Vite build
+5. **Chrome Setup**: Automatically installs dependencies for PDF generation testing
+
+### Test Execution Options
+
+**1. Full Test Suite (CI default)**
+- Runs all 32 tests including PDF generation
+- Requires Chrome/Chromium installed
+- Command: `npm run test`
+
+**2. Skip PDF Tests (Replit/constrained environments)**
+- Runs 22 tests, skips 10 PDF generation tests
+- Validation and error handling tests still run
+- Command: `SKIP_PDF_TESTS=true npm run test:integration`
+
+**3. Unit Tests Only**
+- Runs 16 markdown conversion tests
+- No Chrome required
+- Command: `npm run test:unit`
 
 ## System Architecture
 

@@ -77,33 +77,40 @@ Integration tests verify API endpoints work correctly end-to-end:
 
 Integration tests include PDF generation tests that require Puppeteer to launch Chrome/Chromium.
 
-### Requirements
+### CI Environment
 
-Chrome/Chromium must be installed to run integration tests.
+The GitHub Actions CI workflow automatically installs Chrome dependencies and runs all tests, including PDF generation tests.
 
-**On Ubuntu/Debian:**
+### Local Development
+
+**Option 1: Run all tests (requires Chrome)**
+
+Install Chrome/Chromium:
+
 ```bash
+# Ubuntu/Debian
 sudo apt-get install chromium-browser
-```
 
-**On macOS:**
-```bash
+# macOS
 brew install chromium
 ```
 
-### CI Environment
-
-The GitHub Actions CI workflow automatically installs all Chrome dependencies required for Puppeteer, ensuring all tests run successfully in CI.
-
-### Running Tests
-
-To run all integration tests:
-
+Then run:
 ```bash
 npm run test:integration
 ```
 
-If you don't have Chrome installed and only want to run unit tests:
+**Option 2: Skip PDF tests (Replit and other constrained environments)**
+
+If you're in an environment where Puppeteer cannot run (like Replit), skip PDF tests:
+
+```bash
+SKIP_PDF_TESTS=true npm run test:integration
+```
+
+This will run validation and error handling tests while skipping PDF generation.
+
+**Option 3: Run unit tests only**
 
 ```bash
 npm run test:unit
