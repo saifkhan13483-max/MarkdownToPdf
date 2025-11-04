@@ -105,11 +105,20 @@ export default function Home() {
       if (action === "share") {
         const data = await response.json();
         if (isMountedRef.current) {
-          navigator.clipboard.writeText(data.url);
-          toast({
-            title: "Shareable Link Created",
-            description: `Link copied to clipboard! It will expire in 1 hour.`,
-          });
+          try {
+            await navigator.clipboard.writeText(data.url);
+            toast({
+              title: "Shareable Link Created",
+              description: `Link copied to clipboard! It will expire in 1 hour.`,
+            });
+          } catch (clipboardError) {
+            // Fallback: show the URL in a toast if clipboard access fails
+            toast({
+              title: "Shareable Link Created",
+              description: data.url,
+              duration: 10000,
+            });
+          }
         }
       } else {
         const blob = await response.blob();

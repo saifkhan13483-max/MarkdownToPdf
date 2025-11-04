@@ -24,6 +24,8 @@ export class MemStorage implements IStorage {
     this.cleanupInterval = setInterval(() => {
       this.cleanupExpiredPdfs();
     }, 5 * 60 * 1000);
+    // Unref the interval so it doesn't keep the process alive
+    this.cleanupInterval.unref();
   }
 
   storePdf(buffer: Buffer, filename: string): StoredPdf {
