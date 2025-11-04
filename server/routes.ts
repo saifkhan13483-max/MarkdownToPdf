@@ -7,6 +7,8 @@ import puppeteer, { type Browser } from "puppeteer";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { conversionLimiter } from "./middleware/rateLimit";
+import { sanitizeHtml, validateContentSize, sanitizeFilename } from "./middleware/sanitize";
 
 const md = new MarkdownIt({
   html: true,
@@ -15,10 +17,13 @@ const md = new MarkdownIt({
 });
 
 // Configure multer for file uploads (memory storage)
+// Reduced from 10MB to 2MB for security
+const maxFileSize = parseInt(process.env.MAX_FILE_SIZE || '2097152', 10); // 2MB default
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: maxFileSize,
   },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
@@ -238,8 +243,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PDF conversion endpoint with size limit (10MB)
-  app.post("/api/convert", async (req, res) => {
+  // PDF conversion endpoint with rate limiting and size limit (2MB)
+  app.post("/api/convert", conversionLimiter, async (req, res) => {
     const startTime = Date.now();
     
     try {
@@ -254,18 +259,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { markdown, filename, options, action } = validation.data;
+
+      // Validate content size (2MB default)
+      const maxContentSize = parseInt(process.env.MAX_CONTENT_SIZE || '2097152', 10);
+      const sizeValidation = validateContentSize(markdown, maxContentSize);
+      if (!sizeValidation.valid) {
+        console.warn(`[PDF] Content size validation failed: ${sizeValidation.error}`);
+        return res.status(413).json({
+          error: 'Content too large',
+          message: sizeValidation.error,
+        });
+      }
+
+      // Sanitize filename to prevent directory traversal
+      const safeFilename = sanitizeFilename(filename || 'document');
       const pageSize = options?.pageSize ?? 'A4';
       const orientation = options?.orientation ?? 'portrait';
       const margin = options?.margin ?? 20;
       const theme = options?.theme ?? 'light';
       const template = options?.template ?? 'minimal';
 
-      console.log(`[PDF] Starting conversion - File: ${filename}, Action: ${action}, Template: ${template}, Theme: ${theme}, Size: ${pageSize}, Orientation: ${orientation}`);
+      console.log(`[PDF] Starting conversion - File: ${safeFilename}, Action: ${action}, Template: ${template}, Theme: ${theme}, Size: ${pageSize}, Orientation: ${orientation}`);
 
       // Convert markdown to HTML
       const markdownStartTime = Date.now();
-      const html = md.render(markdown);
+      const rawHtml = md.render(markdown);
       console.log(`[PDF] Markdown rendering took ${Date.now() - markdownStartTime}ms`);
+
+      // Sanitize HTML to prevent XSS attacks before sending to Puppeteer
+      const sanitizeStartTime = Date.now();
+      const html = sanitizeHtml(rawHtml);
+      console.log(`[PDF] HTML sanitization took ${Date.now() - sanitizeStartTime}ms`);
 
       // Load template and replace placeholders
       const templateHtml = getTemplate(template);
@@ -282,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const marginBottom = template === 'professional' ? margin + 10 : margin;
       
       const fullHtml = templateHtml
-        .replace(/\{\{TITLE\}\}/g, filename)
+        .replace(/\{\{TITLE\}\}/g, safeFilename)
         .replace(/\{\{DATE\}\}/g, currentDate)
         .replace(/\{\{CONTENT\}\}/g, html)
         .replace(/\{\{THEME_STYLES\}\}/g, themeStyles)
@@ -314,7 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           displayHeaderFooter: template === 'professional',
           headerTemplate: template === 'professional' ? `
             <div style="font-size: 10px; padding: 5px; width: 100%; text-align: center;">
-              <span style="float: left;">${filename}</span>
+              <span style="float: left;">${safeFilename}</span>
               <span style="float: right;">${currentDate}</span>
             </div>
           ` : '',
@@ -336,8 +360,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const totalTime = Date.now() - startTime;
         console.log(`[PDF] Total conversion time: ${totalTime}ms`);
-
-        const safeFilename = filename.replace(/[^a-z0-9_-]/gi, '_').toLowerCase();
 
         // Handle different actions
         if (action === 'download') {

@@ -8,7 +8,31 @@ The application follows a Linear/Notion-inspired productivity design system, emp
 
 ## Recent Changes
 
-**November 4, 2025 (Latest):**
+**November 4, 2025 (Latest - Security Features):**
+- Implemented comprehensive rate limiting to prevent API abuse:
+  - 10 conversions per IP per minute on `/api/convert` endpoint
+  - 100 requests per IP per minute on all `/api/*` endpoints
+  - Optional API key bypass for trusted clients
+- Reduced file size limits from 10MB to 2MB for security
+- Added server-side HTML sanitization using DOMPurify before Puppeteer rendering
+- Implemented filename sanitization to prevent directory traversal attacks
+- Created middleware/rateLimit.ts for rate limiting logic
+- Created middleware/sanitize.ts for HTML sanitization and validation
+- Added environment variable support for configurable security limits
+- Created comprehensive security documentation in SECURITY.md
+- All security features tested and verified working
+
+**November 4, 2025 (Accessibility & Mobile Improvements):**
+- Added ARIA labels and enhanced keyboard accessibility throughout
+- Implemented skip-to-content link for keyboard navigation
+- Made layout fully responsive with mobile-first design
+- Added accordion-based options panel for mobile devices
+- Improved button layouts with responsive text and wrapping
+- Enhanced focus states for all interactive elements
+- Improved color contrast and font sizes for readability
+- All changes verified to meet WCAG 2.1 AA standards
+
+**November 4, 2025 (Earlier):**
 - Implemented three PDF generation flows: Download, Open in New Tab, and Get Shareable Link
 - Added in-memory PDF storage system with 1-hour expiration for shareable links
 - Created GET `/api/pdf/:id` endpoint to serve stored PDFs
@@ -93,8 +117,11 @@ Preferred communication style: Simple, everyday language.
   - `share`: Stores PDF in-memory and returns shareable URL (1-hour expiration)
 - **PDF retrieval**: GET `/api/pdf/:id` serves stored PDFs by ID
 - **Request validation**: Zod schema validation for type-safe API contracts
-- **Size limits**: 10MB request body limit to prevent abuse
+- **Size limits**: 2MB request body, file, and content limits for security
 - **Browser caching**: Singleton Puppeteer browser instance for performance
+- **Rate limiting**: IP-based rate limiting with configurable thresholds
+- **HTML sanitization**: Server-side XSS prevention using DOMPurify
+- **Security middleware**: Dedicated middleware for rate limiting and sanitization
 
 **PDF Templates:**
 - **Minimal Template**: Clean pages with centered page numbers at the bottom
@@ -103,13 +130,17 @@ Preferred communication style: Simple, everyday language.
 - **Template System**: HTML templates with dynamic placeholders for content, styling, and metadata
 
 **Conversion Pipeline:**
-1. Markdown input validated against schema (including template selection)
-2. Markdown rendered to HTML using markdown-it
-3. Template loaded (minimal.html or professional.html) from templates folder
-4. Print CSS and theme styles injected into template
-5. Placeholders replaced with actual content, title, date, margins, and page settings
-6. Puppeteer generates PDF with displayHeaderFooter for professional template
-7. PDF returned as downloadable blob with proper page numbers and formatting
+1. Request passes through rate limiting middleware (10 req/min per IP)
+2. Markdown input validated against schema (including template selection)
+3. Content size validation (2MB max)
+4. Filename sanitization to prevent directory traversal
+5. Markdown rendered to HTML using markdown-it
+6. **HTML sanitization** to remove scripts, iframes, and malicious content
+7. Template loaded (minimal.html or professional.html) from templates folder
+8. Print CSS and theme styles injected into template
+9. Placeholders replaced with actual content, title, date, margins, and page settings
+10. Puppeteer generates PDF with displayHeaderFooter for professional template
+11. PDF returned as downloadable blob with proper page numbers and formatting
 
 ### Data Storage Solutions
 

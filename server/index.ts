@@ -1,21 +1,32 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { generalApiLimiter } from "./middleware/rateLimit";
 
 const app = express();
+
+// Trust proxy - important for rate limiting behind reverse proxies (like Replit)
+app.set('trust proxy', 1);
 
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown
   }
 }
+
+// Reduce body size limit to 2MB for security
+const maxBodySize = process.env.MAX_BODY_SIZE || '2mb';
+
 app.use(express.json({
-  limit: '10mb',
+  limit: maxBodySize,
   verify: (req, _res, buf) => {
     req.rawBody = buf;
   }
 }));
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: maxBodySize }));
+
+// Apply general rate limiting to all API routes
+app.use('/api/', generalApiLimiter);
 
 app.use((req, res, next) => {
   const start = Date.now();
