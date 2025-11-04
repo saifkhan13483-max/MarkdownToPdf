@@ -421,17 +421,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const totalTime = Date.now() - startTime;
         console.log(`[PDF] Total conversion time: ${totalTime}ms`);
 
+        // Validate PDF buffer
+        if (!pdf || pdf.length === 0) {
+          console.error('[PDF] Generated PDF buffer is empty');
+          return res.status(500).json({ 
+            error: 'PDF generation failed',
+            message: 'Generated PDF is empty'
+          });
+        }
+
+        console.log(`[PDF] Generated PDF size: ${pdf.length} bytes`);
+
         // Handle different actions
         if (action === 'download') {
-          // Send PDF as download
+          // Send PDF as download with proper binary handling
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pdf"`);
-          res.send(pdf);
+          res.setHeader('Content-Length', pdf.length.toString());
+          res.setHeader('Cache-Control', 'no-cache');
+          return res.end(pdf, 'binary');
         } else if (action === 'view') {
-          // Send PDF buffer for viewing (client will create blob URL)
+          // Send PDF buffer for viewing in browser
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `inline; filename="${safeFilename}.pdf"`);
-          res.send(pdf);
+          res.setHeader('Content-Length', pdf.length.toString());
+          res.setHeader('Cache-Control', 'no-cache');
+          return res.end(pdf, 'binary');
         } else if (action === 'share') {
           // Store PDF and return shareable link
           const storedPdf = storage.storePdf(Buffer.from(pdf), `${safeFilename}.pdf`);
@@ -474,9 +489,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Validate PDF buffer before sending
+      if (!storedPdf.buffer || storedPdf.buffer.length === 0) {
+        return res.status(500).json({
+          error: 'Invalid PDF',
+          message: 'The PDF data is corrupted or empty',
+        });
+      }
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="${storedPdf.filename}"`);
-      res.send(storedPdf.buffer);
+      res.setHeader('Content-Length', storedPdf.buffer.length.toString());
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.end(storedPdf.buffer, 'binary');
     } catch (error) {
       console.error('[PDF] Error serving PDF:', error);
       res.status(500).json({
