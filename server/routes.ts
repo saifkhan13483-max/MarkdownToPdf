@@ -49,9 +49,15 @@ function isProductionEnvironment(): boolean {
   );
 }
 
+// Detect test environment
+function isTestEnvironment(): boolean {
+  return process.env.NODE_ENV === 'test';
+}
+
 async function getBrowser(): Promise<Browser> {
   if (!browserInstance || !browserInstance.isConnected()) {
     const isProduction = isProductionEnvironment();
+    const isTest = isTestEnvironment();
     
     if (isProduction) {
       // Serverless environment (Vercel or Replit Deployment)
@@ -75,8 +81,8 @@ async function getBrowser(): Promise<Browser> {
         headless: true,
       });
     } else {
-      // Local development environment
-      console.log('[PDF] Using local Puppeteer');
+      // Local development or test environment
+      console.log(isTest ? '[PDF] Using Puppeteer in test mode' : '[PDF] Using local Puppeteer');
       browserInstance = await puppeteer.launch({
         headless: true,
         args: [
@@ -84,7 +90,23 @@ async function getBrowser(): Promise<Browser> {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--disable-extensions',
+          '--disable-background-networking',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-breakpad',
+          '--disable-component-extensions-with-background-pages',
+          '--disable-features=TranslateUI',
+          '--disable-ipc-flooding-protection',
+          '--disable-renderer-backgrounding',
+          '--enable-features=NetworkService,NetworkServiceInProcess',
+          '--force-color-profile=srgb',
+          '--hide-scrollbars',
+          '--metrics-recording-only',
+          '--mute-audio',
         ],
+        timeout: 10000,
       });
     }
   }
