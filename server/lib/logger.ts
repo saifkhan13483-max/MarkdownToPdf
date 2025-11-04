@@ -112,47 +112,52 @@ class Logger {
 
   /**
    * Create a child logger with additional context
+   * Reuses the parent instance to avoid re-initializing Sentry
    */
-  child(defaultContext: LogContext): Logger {
-    const childLogger = new Logger();
-    
-    // Override logging methods to include default context
-    const originalDebug = childLogger.debug.bind(childLogger);
-    const originalInfo = childLogger.info.bind(childLogger);
-    const originalWarn = childLogger.warn.bind(childLogger);
-    const originalError = childLogger.error.bind(childLogger);
-
-    childLogger.debug = (message: string, context?: LogContext) => {
-      originalDebug(message, { ...defaultContext, ...context });
+  child(defaultContext: LogContext): ChildLogger {
+    return {
+      debug: (message: string, context?: LogContext) => {
+        this.debug(message, { ...defaultContext, ...context });
+      },
+      info: (message: string, context?: LogContext) => {
+        this.info(message, { ...defaultContext, ...context });
+      },
+      warn: (message: string, context?: LogContext) => {
+        this.warn(message, { ...defaultContext, ...context });
+      },
+      error: (message: string, error?: Error | unknown, context?: LogContext) => {
+        this.error(message, error, { ...defaultContext, ...context });
+      },
     };
-
-    childLogger.info = (message: string, context?: LogContext) => {
-      originalInfo(message, { ...defaultContext, ...context });
-    };
-
-    childLogger.warn = (message: string, context?: LogContext) => {
-      originalWarn(message, { ...defaultContext, ...context });
-    };
-
-    childLogger.error = (message: string, error?: Error | unknown, context?: LogContext) => {
-      originalError(message, error, { ...defaultContext, ...context });
-    };
-
-    return childLogger;
   }
 
   /**
    * Flush any pending logs to Sentry (useful before shutdown)
    */
-  async flush(timeout = 2000): Promise<void> {
+  async flush(timeout = 2000): Promise<boolean> {
     if (this.sentryEnabled && this.sentry) {
-      await this.sentry.close(timeout);
+      try {
+        await this.sentry.close(timeout);
+        return true;
+      } catch (error) {
+        console.error('Error flushing Sentry logs:', error);
+        return false;
+      }
     }
+    return true;
   }
+}
+
+// Child logger interface
+interface ChildLogger {
+  debug: (message: string, context?: LogContext) => void;
+  info: (message: string, context?: LogContext) => void;
+  warn: (message: string, context?: LogContext) => void;
+  error: (message: string, error?: Error | unknown, context?: LogContext) => void;
 }
 
 // Export singleton instance
 export const logger = new Logger();
 
-// Export type for use in other files
-export type { LogLevel, LogContext };
+// Export types for use in other files
+export type { LogLevel, LogContext, ChildLogger };

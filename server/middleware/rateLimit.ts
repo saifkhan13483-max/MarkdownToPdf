@@ -15,6 +15,10 @@ export const conversionLimiter = rateLimit({
   // Use default IP-based key generator (handles IPv6 correctly)
   // Skip rate limiting for certain conditions (optional)
   skip: (req) => {
+    // Skip rate limiting in test environment
+    if (process.env.NODE_ENV === 'test') {
+      return true;
+    }
     // Skip rate limiting if API key is provided and valid (future enhancement)
     const apiKey = req.headers['x-api-key'];
     if (apiKey && process.env.ADMIN_API_KEY && apiKey === process.env.ADMIN_API_KEY) {
@@ -44,6 +48,10 @@ export const generalApiLimiter = rateLimit({
   legacyHeaders: false,
   // Use default IP-based key generator (handles IPv6 correctly)
   skip: (req) => {
+    // Skip rate limiting in test environment
+    if (process.env.NODE_ENV === 'test') {
+      return true;
+    }
     const apiKey = req.headers['x-api-key'];
     if (apiKey && process.env.ADMIN_API_KEY && apiKey === process.env.ADMIN_API_KEY) {
       return true;

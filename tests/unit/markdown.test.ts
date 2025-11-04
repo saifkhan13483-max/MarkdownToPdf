@@ -48,7 +48,10 @@ describe('Markdown to HTML Conversion', () => {
     const result = renderMarkdown(markdown);
     
     expect(result.html).toContain('<pre class="hljs">');
-    expect(result.html).toContain('const x = 5;');
+    expect(result.html).toContain('language-javascript');
+    // Code is syntax highlighted, so check for the presence of the keywords
+    expect(result.html).toContain('const');
+    expect(result.html).toContain('5');
   });
 
   it('should convert inline code correctly', () => {

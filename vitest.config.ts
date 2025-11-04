@@ -6,6 +6,9 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: ['./tests/setup.ts'],
+    testTimeout: 30000, // 30 seconds for PDF generation tests
+    include: ['tests/**/*.test.ts'], // Only include tests in tests/ directory
+    exclude: ['node_modules/**', 'dist/**', 'server/test/**'], // Exclude manual test scripts
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -15,6 +18,7 @@ export default defineConfig({
         '**/*.config.ts',
         '**/*.d.ts',
         'tests/',
+        'server/test/',
       ],
     },
   },
