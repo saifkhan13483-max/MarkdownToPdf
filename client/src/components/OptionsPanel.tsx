@@ -23,7 +23,7 @@ export default function OptionsPanel({ options, onOptionsChange }: OptionsPanelP
   };
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex flex-wrap items-center gap-4 md:gap-6">
       <div className="flex items-center gap-2">
         <Label htmlFor="page-size" className="text-xs text-muted-foreground whitespace-nowrap">
           Page Size:

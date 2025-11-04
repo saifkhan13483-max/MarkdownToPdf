@@ -2,6 +2,7 @@ import MarkdownIt from "markdown-it";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, Code } from "lucide-react";
+import DOMPurify from "dompurify";
 
 interface MarkdownPreviewProps {
   markdown: string;
@@ -15,13 +16,17 @@ const md = new MarkdownIt({
 
 export default function MarkdownPreview({ markdown }: MarkdownPreviewProps) {
   const [html, setHtml] = useState("");
+  const [sanitizedHtml, setSanitizedHtml] = useState("");
   const [showRawHTML, setShowRawHTML] = useState(false);
 
   useEffect(() => {
     if (markdown) {
-      setHtml(md.render(markdown));
+      const rendered = md.render(markdown);
+      setHtml(rendered);
+      setSanitizedHtml(DOMPurify.sanitize(rendered));
     } else {
       setHtml("");
+      setSanitizedHtml("");
     }
   }, [markdown]);
 
@@ -54,7 +59,7 @@ export default function MarkdownPreview({ markdown }: MarkdownPreviewProps) {
       </div>
       <div className="flex-1 overflow-y-auto">
         <div className="p-6">
-          {html ? (
+          {sanitizedHtml ? (
             showRawHTML ? (
               <pre className="text-xs font-mono bg-muted p-4 rounded overflow-x-auto">
                 <code>{html}</code>
@@ -62,7 +67,7 @@ export default function MarkdownPreview({ markdown }: MarkdownPreviewProps) {
             ) : (
               <div
                 className="prose prose-sm dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: html }}
+                dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
                 data-testid="content-preview"
               />
             )
