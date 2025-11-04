@@ -253,14 +253,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { markdown, filename, options } = validation.data;
+      const { markdown, filename, options, action } = validation.data;
       const pageSize = options?.pageSize ?? 'A4';
       const orientation = options?.orientation ?? 'portrait';
       const margin = options?.margin ?? 20;
       const theme = options?.theme ?? 'light';
       const template = options?.template ?? 'minimal';
 
-      console.log(`[PDF] Starting conversion - File: ${filename}, Template: ${template}, Theme: ${theme}, Size: ${pageSize}, Orientation: ${orientation}`);
+      console.log(`[PDF] Starting conversion - File: ${filename}, Action: ${action}, Template: ${template}, Theme: ${theme}, Size: ${pageSize}, Orientation: ${orientation}`);
 
       // Convert markdown to HTML
       const markdownStartTime = Date.now();
@@ -337,11 +337,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const totalTime = Date.now() - startTime;
         console.log(`[PDF] Total conversion time: ${totalTime}ms`);
 
-        // Send PDF as download
         const safeFilename = filename.replace(/[^a-z0-9_-]/gi, '_').toLowerCase();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pdf"`);
-        res.send(pdf);
+
+        // Handle different actions
+        if (action === 'download') {
+          // Send PDF as download
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pdf"`);
+          res.send(pdf);
+        } else if (action === 'view') {
+          // Send PDF buffer for viewing (client will create blob URL)
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `inline; filename="${safeFilename}.pdf"`);
+          res.send(pdf);
+        } else if (action === 'share') {
+          // Store PDF and return shareable link
+          const storedPdf = storage.storePdf(Buffer.from(pdf), `${safeFilename}.pdf`);
+          const protocol = req.protocol;
+          const host = req.get('host');
+          const shareableUrl = `${protocol}://${host}/api/pdf/${storedPdf.id}`;
+          
+          res.json({
+            success: true,
+            url: shareableUrl,
+            id: storedPdf.id,
+            expiresAt: storedPdf.expiresAt,
+          });
+        }
       } catch (pageError) {
         await page.close();
         throw pageError;
@@ -353,6 +375,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: 'Failed to convert to PDF',
         message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Serve stored PDFs
+  app.get("/api/pdf/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const storedPdf = storage.getPdf(id);
+
+      if (!storedPdf) {
+        return res.status(404).json({
+          error: 'PDF not found',
+          message: 'The requested PDF does not exist or has expired',
+        });
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${storedPdf.filename}"`);
+      res.send(storedPdf.buffer);
+    } catch (error) {
+      console.error('[PDF] Error serving PDF:', error);
+      res.status(500).json({
+        error: 'Failed to retrieve PDF',
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
