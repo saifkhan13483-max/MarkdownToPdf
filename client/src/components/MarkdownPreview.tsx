@@ -1,32 +1,31 @@
-import MarkdownIt from "markdown-it";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, Code } from "lucide-react";
-import DOMPurify from "dompurify";
+import { Eye, Code, Loader2 } from "lucide-react";
+import { renderMarkdown, type MarkdownRenderResult } from "@/lib/markdown";
 
 interface MarkdownPreviewProps {
   markdown: string;
 }
 
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-});
-
 export default function MarkdownPreview({ markdown }: MarkdownPreviewProps) {
-  const [html, setHtml] = useState("");
-  const [sanitizedHtml, setSanitizedHtml] = useState("");
+  const [rendered, setRendered] = useState<MarkdownRenderResult>({ html: "", sanitizedHtml: "" });
   const [showRawHTML, setShowRawHTML] = useState(false);
+  const [isRendering, setIsRendering] = useState(false);
 
   useEffect(() => {
     if (markdown) {
-      const rendered = md.render(markdown);
-      setHtml(rendered);
-      setSanitizedHtml(DOMPurify.sanitize(rendered));
+      setIsRendering(true);
+      
+      const timeoutId = setTimeout(() => {
+        const result = renderMarkdown(markdown);
+        setRendered(result);
+        setIsRendering(false);
+      }, markdown.length > 5000 ? 100 : 0);
+
+      return () => clearTimeout(timeoutId);
     } else {
-      setHtml("");
-      setSanitizedHtml("");
+      setRendered({ html: "", sanitizedHtml: "" });
+      setIsRendering(false);
     }
   }, [markdown]);
 
@@ -36,38 +35,53 @@ export default function MarkdownPreview({ markdown }: MarkdownPreviewProps) {
         <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground" data-testid="text-preview-title">
           Preview
         </h2>
-        {html && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowRawHTML(!showRawHTML)}
-            className="gap-2"
-          >
-            {showRawHTML ? (
-              <>
-                <Eye className="w-3 h-3" />
-                Show Rendered
-              </>
-            ) : (
-              <>
-                <Code className="w-3 h-3" />
-                Show Raw HTML
-              </>
-            )}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {isRendering && (
+            <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+          )}
+          {rendered.html && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowRawHTML(!showRawHTML)}
+              className="gap-2"
+            >
+              {showRawHTML ? (
+                <>
+                  <Eye className="w-3 h-3" />
+                  Show Rendered
+                </>
+              ) : (
+                <>
+                  <Code className="w-3 h-3" />
+                  Show Raw HTML
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto">
         <div className="p-6">
-          {sanitizedHtml ? (
+          {isRendering ? (
+            <div className="space-y-4" data-testid="skeleton-loading">
+              <div className="h-8 bg-muted rounded animate-pulse w-3/4" />
+              <div className="h-4 bg-muted rounded animate-pulse" />
+              <div className="h-4 bg-muted rounded animate-pulse w-5/6" />
+              <div className="h-4 bg-muted rounded animate-pulse w-4/6" />
+              <div className="h-24 bg-muted rounded animate-pulse mt-4" />
+              <div className="h-4 bg-muted rounded animate-pulse" />
+              <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+            </div>
+          ) : rendered.sanitizedHtml ? (
             showRawHTML ? (
               <pre className="text-xs font-mono bg-muted p-4 rounded overflow-x-auto">
-                <code>{html}</code>
+                <code>{rendered.html}</code>
               </pre>
             ) : (
               <div
                 className="prose prose-sm dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+                dangerouslySetInnerHTML={{ __html: rendered.sanitizedHtml }}
                 data-testid="content-preview"
               />
             )

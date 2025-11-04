@@ -322,3 +322,30 @@
     inset: -1px;
   }
 }
+
+/* Syntax highlighting styles */
+.hljs {
+  border-radius: 6px;
+  padding: 1rem !important;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.dark .hljs {
+  background: hsl(var(--muted)) !important;
+}
+
+:root .hljs {
+  background: hsl(var(--muted)) !important;
+}
+
+/* Ensure code blocks in prose have proper styling */
+.prose pre {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+.prose code {
+  font-family: var(--font-mono);
+}

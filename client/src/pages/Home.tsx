@@ -78,11 +78,10 @@ export default function Home() {
   const handleDownloadHTML = () => {
     if (!markdown) return;
     
-    const MarkdownIt = require("markdown-it");
-    const md = new MarkdownIt({ html: true, linkify: true, typographer: true });
-    const html = md.render(markdown);
+    const { renderMarkdown } = require("@/lib/markdown");
+    const { sanitizedHtml } = renderMarkdown(markdown);
     
-    const blob = new Blob([html], { type: "text/html" });
+    const blob = new Blob([sanitizedHtml], { type: "text/html" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
