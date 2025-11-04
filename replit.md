@@ -8,7 +8,18 @@ The application follows a Linear/Notion-inspired productivity design system, emp
 
 ## Recent Changes
 
-**November 4, 2025:**
+**November 4, 2025 (Latest):**
+- Added professional PDF templates with print-specific CSS
+- Created two template options: Minimal (clean pages with page numbers) and Professional (headers with title/date + footers with page numbers)
+- Implemented @page CSS rules for proper page breaks, margins, and headers/footers
+- Added code block page-break controls to prevent awkward splitting across pages
+- Created styles/print.css with comprehensive print media rules
+- Updated schema to include template selection option
+- Enhanced OptionsPanel with template selector dropdown
+- Configured Puppeteer to support displayHeaderFooter for professional template
+- Templates use dynamic placeholders for title, date, content, and styling
+
+**November 4, 2025 (Earlier):**
 - Implemented complete PDF conversion pipeline using Puppeteer
 - Added browser instance caching for improved performance
 - Installed required system dependencies for Chromium in NixOS environment
@@ -62,12 +73,20 @@ Preferred communication style: Simple, everyday language.
 - **Size limits**: 10MB request body limit to prevent abuse
 - **Browser caching**: Singleton Puppeteer browser instance for performance
 
+**PDF Templates:**
+- **Minimal Template**: Clean pages with centered page numbers at the bottom
+- **Professional Template**: Headers with document title and date, footers with page numbers ("Page X of Y")
+- **Print CSS**: Dedicated stylesheet (styles/print.css) with @page rules, page-break controls, and code block handling
+- **Template System**: HTML templates with dynamic placeholders for content, styling, and metadata
+
 **Conversion Pipeline:**
-1. Markdown input validated against schema
+1. Markdown input validated against schema (including template selection)
 2. Markdown rendered to HTML using markdown-it
-3. HTML wrapped in styled document template
-4. Puppeteer generates PDF from HTML
-5. PDF returned as downloadable blob
+3. Template loaded (minimal.html or professional.html) from templates folder
+4. Print CSS and theme styles injected into template
+5. Placeholders replaced with actual content, title, date, margins, and page settings
+6. Puppeteer generates PDF with displayHeaderFooter for professional template
+7. PDF returned as downloadable blob with proper page numbers and formatting
 
 ### Data Storage Solutions
 
