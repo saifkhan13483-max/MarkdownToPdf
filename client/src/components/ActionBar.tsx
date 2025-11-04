@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Download, Trash2, FileDown, Loader2, FileCode } from "lucide-react";
+import { Download, Trash2, FileDown, Loader2, FileCode, ExternalLink, Share2 } from "lucide-react";
 import OptionsPanel from "./OptionsPanel";
 
 interface ActionBarProps {
-  onConvert: () => void;
+  onDownloadPdf: () => void;
+  onOpenPdf: () => void;
+  onSharePdf: () => void;
   onClear: () => void;
   onDownloadSample: () => void;
   onDownloadHTML: () => void;
@@ -20,7 +22,9 @@ interface ActionBarProps {
 }
 
 export default function ActionBar({
-  onConvert,
+  onDownloadPdf,
+  onOpenPdf,
+  onSharePdf,
   onClear,
   onDownloadSample,
   onDownloadHTML,
@@ -37,11 +41,11 @@ export default function ActionBar({
       <div className="border-t">
         <div className="max-w-7xl mx-auto flex items-center gap-4 px-6 py-4">
           <Button
-            onClick={onConvert}
+            onClick={onDownloadPdf}
             disabled={!hasContent || isConverting}
             size="lg"
             className="gap-2"
-            data-testid="button-convert"
+            data-testid="button-download-pdf"
           >
             {isConverting ? (
               <>
@@ -51,9 +55,31 @@ export default function ActionBar({
             ) : (
               <>
                 <Download className="w-4 h-4" data-testid="icon-download" />
-                Convert to PDF
+                Download PDF
               </>
             )}
+          </Button>
+          <Button
+            onClick={onOpenPdf}
+            disabled={!hasContent || isConverting}
+            variant="outline"
+            size="lg"
+            className="gap-2"
+            data-testid="button-open-pdf"
+          >
+            <ExternalLink className="w-4 h-4" data-testid="icon-open" />
+            Open in New Tab
+          </Button>
+          <Button
+            onClick={onSharePdf}
+            disabled={!hasContent || isConverting}
+            variant="outline"
+            size="lg"
+            className="gap-2"
+            data-testid="button-share-pdf"
+          >
+            <Share2 className="w-4 h-4" data-testid="icon-share" />
+            Get Shareable Link
           </Button>
           <Button
             variant="outline"

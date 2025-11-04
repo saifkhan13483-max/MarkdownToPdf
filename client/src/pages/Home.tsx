@@ -44,7 +44,7 @@ export default function Home() {
     });
   };
 
-  const handleConvert = async () => {
+  const convertToPdf = async (action: "download" | "view" | "share") => {
     if (!markdown) {
       toast({
         title: "No Content",
@@ -54,12 +54,10 @@ export default function Home() {
       return;
     }
     
-    // Create a new AbortController for this conversion
     abortControllerRef.current = new AbortController();
     setIsConverting(true);
     
     try {
-      // Convert margins from string to number
       const marginMap: { [key: string]: number } = {
         small: 10,
         medium: 20,
@@ -81,6 +79,7 @@ export default function Home() {
             theme: options.theme === "print-friendly" ? "print" : options.theme,
             template: options.template,
           },
+          action,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -103,27 +102,47 @@ export default function Home() {
         throw new Error(errorMessage);
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = (uploadedFile?.name.replace(/\.md$/, "") || "document") + ".pdf";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      if (action === "share") {
+        const data = await response.json();
+        if (isMountedRef.current) {
+          navigator.clipboard.writeText(data.url);
+          toast({
+            title: "Shareable Link Created",
+            description: `Link copied to clipboard! It will expire in 1 hour.`,
+          });
+        }
+      } else {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        if (action === "download") {
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = (uploadedFile?.name.replace(/\.md$/, "") || "document") + ".pdf";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
 
-      // Only update state if component is still mounted
-      if (isMountedRef.current) {
-        toast({
-          title: "PDF Generated Successfully",
-          description: "Your PDF has been downloaded to your device.",
-        });
+          if (isMountedRef.current) {
+            toast({
+              title: "PDF Downloaded",
+              description: "Your PDF has been downloaded to your device.",
+            });
+          }
+        } else if (action === "view") {
+          window.open(url, "_blank");
+          
+          if (isMountedRef.current) {
+            toast({
+              title: "PDF Opened",
+              description: "Your PDF has been opened in a new tab.",
+            });
+          }
+        }
       }
     } catch (error) {
-      // Don't show error toast if the request was cancelled by the user
       if (error instanceof Error && error.name === "AbortError") {
-        // Only show toast if component is still mounted
         if (isMountedRef.current) {
           toast({
             title: "Conversion Cancelled",
@@ -133,7 +152,6 @@ export default function Home() {
       } else {
         console.error("Conversion error:", error);
         
-        // Provide user-friendly error messages
         let errorMessage = "An unexpected error occurred while converting to PDF.";
         
         if (error instanceof Error) {
@@ -148,7 +166,6 @@ export default function Home() {
           }
         }
         
-        // Only show toast if component is still mounted
         if (isMountedRef.current) {
           toast({
             title: "Conversion Failed",
@@ -158,13 +175,16 @@ export default function Home() {
         }
       }
     } finally {
-      // Only update state if component is still mounted
       if (isMountedRef.current) {
         setIsConverting(false);
       }
       abortControllerRef.current = null;
     }
   };
+
+  const handleDownloadPdf = () => convertToPdf("download");
+  const handleOpenPdf = () => convertToPdf("view");
+  const handleSharePdf = () => convertToPdf("share");
 
   const handleCancelConversion = () => {
     if (abortControllerRef.current) {
@@ -295,7 +315,9 @@ function greet(name) {
       </div>
 
       <ActionBar
-        onConvert={handleConvert}
+        onDownloadPdf={handleDownloadPdf}
+        onOpenPdf={handleOpenPdf}
+        onSharePdf={handleSharePdf}
         onClear={handleClear}
         onDownloadSample={handleDownloadSample}
         onDownloadHTML={handleDownloadHTML}
