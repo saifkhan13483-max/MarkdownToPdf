@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}}</title>
+  <style>
+    {{THEME_STYLES}}
+  </style>
+  <style>
+    {{PRINT_STYLES}}
+  </style>
+  <style>
+    /* Professional template - header with title and footer with page numbers */
+    @page {
+      margin-top: {{MARGIN_TOP}}mm;
+      margin-right: {{MARGIN}}mm;
+      margin-bottom: {{MARGIN_BOTTOM}}mm;
+      margin-left: {{MARGIN}}mm;
+      size: {{PAGE_SIZE}} {{ORIENTATION}};
+      
+      @top-left {
+        content: "{{TITLE}}";
+        font-size: 10pt;
+        font-weight: 600;
+        color: #333;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      
+      @top-right {
+        content: "{{DATE}}";
+        font-size: 9pt;
+        color: #888;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      
+      @bottom-center {
+        content: "Page " counter(page);
+        font-size: 9pt;
+        color: #666;
+        padding-top: 8px;
+        border-top: 1px solid #e0e0e0;
+      }
+    }
+    
+    /* First page - might want different header */
+    @page :first {
+      @top-left {
+        content: "{{TITLE}}";
+        font-size: 12pt;
+        font-weight: 600;
+        color: #222;
+      }
+      
+      @top-right {
+        content: "{{DATE}}";
+        font-size: 10pt;
+        color: #666;
+      }
+    }
+    
+    body {
+      counter-reset: page;
+    }
+    
+    /* Fallback header and footer for PDF generators that don't support @page rules fully */
+    .professional-header {
+      display: none; /* Hidden when @page rules work */
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 10px 20px;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 10pt;
+      z-index: 1000;
+    }
+    
+    .professional-header-title {
+      font-weight: 600;
+      color: #333;
+      display: inline-block;
+    }
+    
+    .professional-header-date {
+      float: right;
+      font-size: 9pt;
+      color: #888;
+    }
+    
+    .professional-footer {
+      display: none; /* Hidden when @page rules work */
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 8px 20px;
+      background: white;
+      border-top: 1px solid #e0e0e0;
+      text-align: center;
+      font-size: 9pt;
+      color: #666;
+      z-index: 1000;
+    }
+    
+    /* Content padding to account for fixed headers/footers if needed */
+    .pdf-content {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- Fallback header (hidden when @page works) -->
+  <div class="professional-header">
+    <span class="professional-header-title">{{TITLE}}</span>
+    <span class="professional-header-date">{{DATE}}</span>
+  </div>
+  
+  <div class="pdf-content">
+    {{CONTENT}}
+  </div>
+  
+  <!-- Fallback footer (hidden when @page works) -->
+  <div class="professional-footer">
+    Page <span class="page-number"></span>
+  </div>
+</body>
+</html>

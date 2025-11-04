@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}}</title>
+  <style>
+    {{THEME_STYLES}}
+  </style>
+  <style>
+    {{PRINT_STYLES}}
+  </style>
+  <style>
+    /* Minimal template - clean and simple with page numbers */
+    @page {
+      margin: {{MARGIN}}mm;
+      size: {{PAGE_SIZE}} {{ORIENTATION}};
+      @bottom-center {
+        content: counter(page);
+        font-size: 9pt;
+        color: #666;
+      }
+    }
+    
+    body {
+      counter-reset: page;
+    }
+    
+    /* Simple page number styling */
+    .minimal-page-number {
+      display: none; /* Hidden in favor of @page counter */
+    }
+  </style>
+</head>
+<body>
+  <div class="pdf-content">
+    {{CONTENT}}
+  </div>
+</body>
+</html>

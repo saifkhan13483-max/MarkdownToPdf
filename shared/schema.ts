@@ -5,6 +5,7 @@ export const pdfOptionsSchema = z.object({
   orientation: z.enum(["portrait", "landscape"]).optional().default("portrait"),
   margin: z.number().min(0).max(100).optional().default(20),
   theme: z.enum(["light", "dark", "print"]).optional().default("light"),
+  template: z.enum(["minimal", "professional"]).optional().default("minimal"),
 });
 
 export const convertMarkdownSchema = z.object({

@@ -6,6 +6,7 @@ import MarkdownIt from "markdown-it";
 import puppeteer, { type Browser } from "puppeteer";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
 const md = new MarkdownIt({
   html: true,
@@ -45,6 +46,48 @@ async function getBrowser(): Promise<Browser> {
     });
   }
   return browserInstance;
+}
+
+// Load print CSS
+let printCssCache: string | null = null;
+function getPrintCss(): string {
+  if (!printCssCache) {
+    try {
+      printCssCache = fs.readFileSync('styles/print.css', 'utf-8');
+    } catch (error) {
+      console.warn('[PDF] Could not load print.css, using empty styles:', error);
+      printCssCache = '';
+    }
+  }
+  return printCssCache;
+}
+
+// Load template HTML
+function getTemplate(templateName: string): string {
+  try {
+    return fs.readFileSync(`templates/${templateName}.html`, 'utf-8');
+  } catch (error) {
+    console.warn(`[PDF] Could not load template ${templateName}.html, using fallback`, error);
+    // Fallback template
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{{TITLE}}</title>
+  <style>{{THEME_STYLES}}</style>
+  <style>{{PRINT_STYLES}}</style>
+  <style>
+    @page {
+      margin: {{MARGIN}}mm;
+      size: {{PAGE_SIZE}} {{ORIENTATION}};
+    }
+  </style>
+</head>
+<body>
+  <div class="pdf-content">{{CONTENT}}</div>
+</body>
+</html>`;
+  }
 }
 
 function getThemeStyles(theme: PdfOptions['theme']): string {
@@ -215,33 +258,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orientation = options?.orientation ?? 'portrait';
       const margin = options?.margin ?? 20;
       const theme = options?.theme ?? 'light';
+      const template = options?.template ?? 'minimal';
 
-      console.log(`[PDF] Starting conversion - File: ${filename}, Theme: ${theme}, Size: ${pageSize}, Orientation: ${orientation}`);
+      console.log(`[PDF] Starting conversion - File: ${filename}, Template: ${template}, Theme: ${theme}, Size: ${pageSize}, Orientation: ${orientation}`);
 
       // Convert markdown to HTML
       const markdownStartTime = Date.now();
       const html = md.render(markdown);
       console.log(`[PDF] Markdown rendering took ${Date.now() - markdownStartTime}ms`);
 
-      // Create full HTML document with styling
-      const fullHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    @page {
-      margin: ${margin}mm;
-      size: ${pageSize} ${orientation};
-    }
-    ${getThemeStyles(theme)}
-  </style>
-</head>
-<body>
-  ${html}
-</body>
-</html>
-`;
+      // Load template and replace placeholders
+      const templateHtml = getTemplate(template);
+      const printStyles = getPrintCss();
+      const themeStyles = getThemeStyles(theme);
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      // Calculate margins for professional template (extra space for header/footer)
+      const marginTop = template === 'professional' ? margin + 10 : margin;
+      const marginBottom = template === 'professional' ? margin + 10 : margin;
+      
+      const fullHtml = templateHtml
+        .replace(/\{\{TITLE\}\}/g, filename)
+        .replace(/\{\{DATE\}\}/g, currentDate)
+        .replace(/\{\{CONTENT\}\}/g, html)
+        .replace(/\{\{THEME_STYLES\}\}/g, themeStyles)
+        .replace(/\{\{PRINT_STYLES\}\}/g, printStyles)
+        .replace(/\{\{PAGE_SIZE\}\}/g, pageSize)
+        .replace(/\{\{ORIENTATION\}\}/g, orientation)
+        .replace(/\{\{MARGIN\}\}/g, margin.toString())
+        .replace(/\{\{MARGIN_TOP\}\}/g, marginTop.toString())
+        .replace(/\{\{MARGIN_BOTTOM\}\}/g, marginBottom.toString());
 
       // Use cached browser instance for better performance
       const browserStartTime = Date.now();
@@ -260,10 +310,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           format: pageSize,
           landscape: orientation === 'landscape',
           printBackground: true,
+          preferCSSPageSize: true,
+          displayHeaderFooter: template === 'professional',
+          headerTemplate: template === 'professional' ? `
+            <div style="font-size: 10px; padding: 5px; width: 100%; text-align: center;">
+              <span style="float: left;">${filename}</span>
+              <span style="float: right;">${currentDate}</span>
+            </div>
+          ` : '',
+          footerTemplate: template === 'professional' ? `
+            <div style="font-size: 9px; padding: 5px; width: 100%; text-align: center;">
+              Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+            </div>
+          ` : '',
           margin: {
-            top: `${margin}mm`,
+            top: template === 'professional' ? `${marginTop}mm` : `${margin}mm`,
             right: `${margin}mm`,
-            bottom: `${margin}mm`,
+            bottom: template === 'professional' ? `${marginBottom}mm` : `${margin}mm`,
             left: `${margin}mm`,
           },
         });

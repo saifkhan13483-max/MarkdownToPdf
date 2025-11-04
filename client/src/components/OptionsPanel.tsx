@@ -13,6 +13,7 @@ interface OptionsPanelProps {
     orientation: string;
     margins: string;
     theme: string;
+    template: string;
   };
   onOptionsChange: (options: any) => void;
 }
@@ -75,13 +76,28 @@ export default function OptionsPanel({ options, onOptionsChange }: OptionsPanelP
           Theme:
         </Label>
         <Select value={options.theme} onValueChange={(value) => updateOption("theme", value)}>
-          <SelectTrigger id="theme" className="h-8 w-32 text-xs">
+          <SelectTrigger id="theme" className="h-8 w-32 text-xs" data-testid="select-theme">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="light">Light</SelectItem>
             <SelectItem value="dark">Dark</SelectItem>
             <SelectItem value="print-friendly">Print-friendly</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Label htmlFor="template" className="text-xs text-muted-foreground whitespace-nowrap">
+          Template:
+        </Label>
+        <Select value={options.template} onValueChange={(value) => updateOption("template", value)}>
+          <SelectTrigger id="template" className="h-8 w-36 text-xs" data-testid="select-template">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="minimal">Minimal</SelectItem>
+            <SelectItem value="professional">Professional</SelectItem>
           </SelectContent>
         </Select>
       </div>

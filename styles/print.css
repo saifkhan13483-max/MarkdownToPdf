@@ -1,0 +1,195 @@
+/* Print-specific CSS for professional PDF output */
+
+/* Page setup with headers, footers, and margins */
+@page {
+  margin: 25mm 20mm 20mm 20mm;
+}
+
+/* Professional template - pages with header and footer */
+@page :first {
+  @top-left {
+    content: "";
+  }
+  @top-right {
+    content: "";
+  }
+}
+
+/* Page counters for page numbers */
+body {
+  counter-reset: page;
+}
+
+/* Prevent awkward page breaks */
+h1, h2, h3, h4, h5, h6 {
+  page-break-after: avoid;
+  break-after: avoid;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Keep headings with following content */
+h1, h2, h3, h4, h5, h6 {
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Code blocks should not break badly across pages */
+pre, blockquote, table {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Try to keep list items together */
+li {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Avoid orphans and widows */
+p {
+  orphans: 3;
+  widows: 3;
+}
+
+/* Images should not break across pages */
+img {
+  page-break-inside: avoid;
+  break-inside: avoid;
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* Code blocks styling for print */
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin: 1em 0;
+}
+
+pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Table handling */
+table {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Ensure table rows don't break */
+tr {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Professional template header */
+.pdf-header {
+  position: running(header);
+  text-align: left;
+  font-size: 10pt;
+  color: #666;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 16px;
+}
+
+.pdf-header-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.pdf-header-date {
+  font-size: 9pt;
+  color: #888;
+  float: right;
+}
+
+/* Professional template footer with page numbers */
+.pdf-footer {
+  position: running(footer);
+  text-align: center;
+  font-size: 9pt;
+  color: #666;
+  padding-top: 8px;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 16px;
+}
+
+.pdf-footer::after {
+  content: "Page " counter(page);
+}
+
+/* For browsers/PDF generators that support CSS Paged Media */
+@page {
+  @top-left {
+    content: element(header);
+  }
+  @bottom-center {
+    content: element(footer);
+  }
+}
+
+/* Fallback page numbers for simpler implementations */
+.page-number {
+  position: fixed;
+  bottom: 10mm;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9pt;
+  color: #666;
+}
+
+/* Hide page number on first page if needed */
+.page-number.hide-first {
+  display: none;
+}
+
+/* Content area styling */
+.pdf-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure links are visible in print */
+a[href]::after {
+  content: none; /* Don't show URLs by default */
+}
+
+/* For professional documents, show important links */
+.show-links a[href]::after {
+  content: " (" attr(href) ")";
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Better table borders for print */
+@media print {
+  table {
+    border-collapse: collapse;
+  }
+  
+  table th,
+  table td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+  }
+  
+  /* Ensure code blocks are readable */
+  pre {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 12px;
+    background-color: #f8f8f8 !important;
+  }
+  
+  code {
+    background-color: #f0f0f0 !important;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+}

@@ -15,6 +15,7 @@ export default function Home() {
     orientation: "portrait",
     margins: "medium",
     theme: "light",
+    template: "minimal",
   });
   const { toast } = useToast();
 
@@ -33,6 +34,13 @@ export default function Home() {
     setIsConverting(true);
     
     try {
+      // Convert margins from string to number
+      const marginMap: { [key: string]: number } = {
+        small: 10,
+        medium: 20,
+        large: 30,
+      };
+      
       const response = await fetch("/api/convert", {
         method: "POST",
         headers: {
@@ -41,7 +49,13 @@ export default function Home() {
         body: JSON.stringify({
           markdown,
           filename: uploadedFile?.name.replace(/\.md$/, "") || "document",
-          options,
+          options: {
+            pageSize: options.pageSize,
+            orientation: options.orientation,
+            margin: marginMap[options.margins] || 20,
+            theme: options.theme === "print-friendly" ? "print" : options.theme,
+            template: options.template,
+          },
         }),
       });
 
