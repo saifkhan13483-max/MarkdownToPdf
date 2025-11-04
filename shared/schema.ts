@@ -12,6 +12,7 @@ export const convertMarkdownSchema = z.object({
   markdown: z.string().min(1, "Markdown content is required"),
   filename: z.string().optional().default("document"),
   options: pdfOptionsSchema.optional().default({}),
+  action: z.enum(["download", "view", "share"]).optional().default("download"),
 });
 
 export const uploadMarkdownResponseSchema = z.object({
