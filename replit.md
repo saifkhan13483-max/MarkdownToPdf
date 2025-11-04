@@ -8,7 +8,25 @@ The application follows a Linear/Notion-inspired productivity design system, emp
 
 ## Recent Changes
 
-**November 4, 2025 (Latest - Testing & Maintainability):**
+**November 4, 2025 (Latest - Deployment Configuration):**
+- Configured application for production deployment to Vercel and Replit
+- Added serverless Puppeteer support using @sparticuz/chromium + puppeteer-core
+- Implemented automatic environment detection (VERCEL, REPLIT_DEPLOYMENT, NODE_ENV)
+- Browser instance now switches between local Puppeteer and serverless Chromium based on environment
+- Created vercel.json with optimal configuration:
+  - 250MB function bundle size for Chromium binary
+  - 60 second timeout for PDF generation
+  - 3008MB memory allocation for optimal performance
+- Configured Replit Autoscale deployment with build and run commands
+- Created comprehensive README.md with:
+  - Complete deployment guides for both Vercel and Replit
+  - Environment variable configuration instructions
+  - Troubleshooting guide for common deployment issues
+  - Production checklist and testing recommendations
+  - API endpoint documentation
+- Application is now fully deployment-ready with proper serverless support
+
+**November 4, 2025 (Testing & Maintainability):**
 - Implemented comprehensive test suite with 32 passing tests:
   - 16 unit tests for markdown → HTML conversion
   - 16 integration tests for API endpoints (including PDF generation)
