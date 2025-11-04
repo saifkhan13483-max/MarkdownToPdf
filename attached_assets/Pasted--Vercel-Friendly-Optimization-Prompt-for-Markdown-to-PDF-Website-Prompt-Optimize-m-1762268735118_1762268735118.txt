@@ -1,0 +1,79 @@
+### 🚀 Vercel-Friendly Optimization Prompt for Markdown-to-PDF Website
+
+**Prompt:**
+
+"Optimize my Markdown-to-PDF web app to be fully Vercel-friendly.
+My project currently uses Vite or Next.js and may include Puppeteer for PDF generation.
+Please:
+
+1. **Update `vercel.json`:**
+
+   * Remove any deprecated `builds` property.
+   * Keep only the new style config:
+
+     ```json
+     {
+       "framework": "vite",
+       "buildCommand": "npm run build",
+       "outputDirectory": "dist",
+       "functions": {
+         "api/**/*.js": {
+           "maxDuration": 10,
+           "memory": 1024
+         }
+       }
+     }
+     ```
+   * Make sure this file works with Vercel’s current runtime.
+
+2. **Adjust PDF generation for serverless:**
+
+   * Replace `puppeteer` with `puppeteer-core` and import `chrome-aws-lambda` for headless Chrome in AWS Lambda.
+   * In your API route (e.g., `/api/generate-pdf`), dynamically import:
+
+     ```js
+     const chromium = await import('chrome-aws-lambda');
+     const puppeteer = await import('puppeteer-core');
+     ```
+
+     and launch with:
+
+     ```js
+     const browser = await puppeteer.launch({
+       args: chromium.args,
+       executablePath: await chromium.executablePath,
+       headless: chromium.headless,
+     });
+     ```
+   * If Chromium isn’t supported, use the lightweight `md-to-pdf` library instead.
+
+3. **Update package.json scripts:**
+
+   ```json
+   {
+     "scripts": {
+       "dev": "vite",
+       "build": "vite build",
+       "preview": "vite preview"
+     }
+   }
+   ```
+
+4. **Check environment compatibility:**
+
+   * Use ES Modules syntax or CommonJS consistently.
+   * Avoid local filesystem writes (use in-memory buffers).
+   * Ensure the `/api` folder contains only `.js` or `.ts` serverless routes.
+
+5. **Output final instructions** for deploying to Vercel, including how to set:
+
+   * `NODE_ENV=production`
+   * `CHROME_PATH` (if needed)
+   * Any required environment variables (for secrets or config).
+
+Produce the final working `vercel.json`, updated code snippets for serverless PDF generation, and explain why each change ensures Vercel compatibility."
+
+---
+
+**Bonus Tip:**
+If your app is static (no backend), host the UI on Vercel and use **Edge Functions** or a small **API route** just for PDF generation.
