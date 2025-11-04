@@ -9,6 +9,15 @@ The application follows a Linear/Notion-inspired productivity design system, emp
 ## Recent Changes
 
 **November 4, 2025 (Latest):**
+- Added progress modal with spinner and cancel functionality for PDF generation
+- Implemented AbortController to allow users to cancel ongoing conversions
+- Enhanced error handling with clear, user-friendly messages for different scenarios
+- Added proper cleanup on component unmount to prevent memory leaks
+- Improved toast notification system for success, error, and cancellation states
+- Modal prevents accidental dismissal during conversion process
+- Convert button properly disabled during active conversions
+
+**November 4, 2025 (Earlier):**
 - Added professional PDF templates with print-specific CSS
 - Created two template options: Minimal (clean pages with page numbers) and Professional (headers with title/date + footers with page numbers)
 - Implemented @page CSS rules for proper page breaks, margins, and headers/footers
